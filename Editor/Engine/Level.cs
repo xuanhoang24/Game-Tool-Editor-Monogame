@@ -1,11 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
 using Editor.Engine.Interfaces;
 using System.IO;
 using System.Collections.Generic;
 using System.Windows.Forms;
-
-
 
 namespace Editor.Engine
 {
@@ -35,14 +34,12 @@ namespace Editor.Engine
             m_models.Add(_model);
         }
 
-        public void Update(float _delta)
+        public void HandleTranslate()
         {
             InputController ic = InputController.Instance;
             Vector3 translate = Vector3.Zero;
             if (ic.IsKeyDown(Keys.Left)) translate.X += -10;
-
             if (ic.IsKeyDown(Keys.Right)) translate.X += 10;
-
             if (ic.IsKeyDown(Keys.Menu))
             {
                 if (ic.IsKeyDown(Keys.Up)) translate.Z += 1;
@@ -53,7 +50,6 @@ namespace Editor.Engine
                 if (ic.IsKeyDown(Keys.Up)) translate.Y += 10;
                 if (ic.IsKeyDown(Keys.Down)) translate.Y += -10;
             }
-
             if (ic.IsButtonDown(MouseButtons.Middle))
             {
                 Vector2 dir = ic.MousePosition - ic.LastPosition;
@@ -71,6 +67,12 @@ namespace Editor.Engine
                 m_camera.Translate(translate * 0.001f);
             }
 
+
+        }
+
+        private void HandleRotate(float _delta)
+        {
+            InputController ic = InputController.Instance;
             if (ic.IsButtonDown(MouseButtons.Right))
             {
                 Vector2 dir = ic.MousePosition - ic.LastPosition;
@@ -80,6 +82,36 @@ namespace Editor.Engine
                     m_camera.Rotate(movement);
                 }
             }
+        }
+
+        private void HandlePick()
+        {
+            InputController ic = InputController.Instance;
+            if (ic.IsButtonDown(MouseButtons.Left))
+            {
+                Ray r = ic.GetPickRay(m_camera);
+                foreach (Models model in m_models)
+                {
+                    model.Selected = false;
+                    foreach (ModelMesh mesh in model.Mesh.Meshes)
+                    {
+                        BoundingSphere s = mesh.BoundingSphere;
+                        s = s.Transform(model.GetTransform());
+                        float? f = r.Intersects(s);
+                        if (f.HasValue)
+                        {
+                            model.Selected = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        public void Update(float _delta)
+        {
+            HandleTranslate();
+            HandleRotate(_delta);
+            HandlePick();
         }
 
         public void Render()

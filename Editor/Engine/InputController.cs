@@ -80,6 +80,20 @@ namespace Editor.Engine
             LastPosition = MousePosition;
         }
 
+        public Ray GetPickRay(Camera _camera)
+        {
+            Vector3 nearPoint = new Vector3(MousePosition, 0);
+            Vector3 farPoint = new Vector3(MousePosition, 1);
+
+            nearPoint = _camera.Viewport.Unproject(nearPoint, _camera.Projection, _camera.View, Matrix.Identity);
+            farPoint = _camera.Viewport.Unproject(farPoint, _camera.Projection, _camera.View, Matrix.Identity);
+
+            Vector3 direction = farPoint - nearPoint;
+            direction.Normalize();
+
+            return new Ray(nearPoint, direction);
+        }
+
         public override string ToString()
         {
             string s = "Keys Down: ";

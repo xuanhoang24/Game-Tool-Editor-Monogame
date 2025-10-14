@@ -9,12 +9,12 @@ namespace Editor.Engine
     class Models : ISerializable
     {
         public Model Mesh { get; set; }
+        public Texture Texture { get; set; }
         public Effect Shader { get; set; }
         public Vector3 Position { get => m_position; set { m_position = value; } }
         public Vector3 Rotation { get => m_rotation; set { m_rotation = value; } }
         public float Scale { get; set; }
-
-        public Texture Texture { get; set; }
+        public bool Selected { get; set; } = false;
 
         private Vector3 m_position;
         private Vector3 m_rotation;
@@ -65,6 +65,7 @@ namespace Editor.Engine
             Shader.Parameters["World"].SetValue(GetTransform());
             Shader.Parameters["WorldViewProjection"].SetValue(GetTransform() * _view * _projection);
             Shader.Parameters["Texture"].SetValue(Texture);
+            Shader.Parameters["Tint"].SetValue(Selected);
 
             foreach (ModelMesh mesh in Mesh.Meshes)
             {

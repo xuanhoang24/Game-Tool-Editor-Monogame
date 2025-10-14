@@ -15,7 +15,7 @@ namespace Editor.Engine
 
         // Members
         private List<Models> m_models = new();
-        private Camera m_camera = new(new Vector3(0, 2, 2), 16 / 9);
+        private Camera m_camera = new(new Vector3(0, 0, -20), 16 / 9);
 
         public Level()
         {

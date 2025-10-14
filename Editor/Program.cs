@@ -2,8 +2,9 @@
 using Editor.Editor;
 using System.Threading;
 
-Thread.CurrentThread.SetApartmentState(ApartmentState.Unknown);
-Thread.CurrentThread.SetApartmentState(ApartmentState.STA);
+Thread t = Thread.CurrentThread;
+t.SetApartmentState(ApartmentState.Unknown);
+t.SetApartmentState(ApartmentState.STA);
 
 FormEditor editor = new();
 editor.Game = new GameEditor(editor);

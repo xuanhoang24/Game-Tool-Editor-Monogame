@@ -1,15 +1,20 @@
-﻿using Editor.Engine.Interfaces;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
-using System.Collections.Generic;
+using Editor.Engine.Interfaces;
 using System.IO;
+using System.Collections.Generic;
+using System.Windows.Forms;
+
+
 
 namespace Editor.Engine
 {
     internal class Level : ISerializable
     {
+        // Accessors
         public Camera GetCamera() { return m_camera; }
 
+        // Members
         private List<Models> m_models = new();
         private Camera m_camera = new(new Vector3(0, 2, 2), 16 / 9);
 
@@ -21,6 +26,8 @@ namespace Editor.Engine
         {
             Models teapot = new(_content, "Teapot", "Metal", "MyShader", Vector3.Zero, 1.0f);
             AddModel(teapot);
+            teapot = new(_content, "Teapot", "Metal", "MyShader", new Vector3(1, 0, 0), 1.0f);
+            AddModel(teapot);
         }
 
         public void AddModel(Models _model)
@@ -28,9 +35,56 @@ namespace Editor.Engine
             m_models.Add(_model);
         }
 
+        public void Update(float _delta)
+        {
+            InputController ic = InputController.Instance;
+            Vector3 translate = Vector3.Zero;
+            if (ic.IsKeyDown(Keys.Left)) translate.X += -10;
+
+            if (ic.IsKeyDown(Keys.Right)) translate.X += 10;
+
+            if (ic.IsKeyDown(Keys.Menu))
+            {
+                if (ic.IsKeyDown(Keys.Up)) translate.Z += 1;
+                if (ic.IsKeyDown(Keys.Down)) translate.Z += -1;
+            }
+            else
+            {
+                if (ic.IsKeyDown(Keys.Up)) translate.Y += 10;
+                if (ic.IsKeyDown(Keys.Down)) translate.Y += -10;
+            }
+
+            if (ic.IsButtonDown(MouseButtons.Middle))
+            {
+                Vector2 dir = ic.MousePosition - ic.LastPosition;
+                translate.X = -dir.X;
+                translate.Y = dir.Y;
+            }
+
+            if (ic.GetWheel() != 0)
+            {
+                translate.Z += ic.GetWheel() * 2;
+            }
+
+            if (translate != Vector3.Zero)
+            {
+                m_camera.Translate(translate * 0.001f);
+            }
+
+            if (ic.IsButtonDown(MouseButtons.Right))
+            {
+                Vector2 dir = ic.MousePosition - ic.LastPosition;
+                if (dir != Vector2.Zero)
+                {
+                    Vector3 movement = new Vector3(dir.Y, dir.X, 0) * _delta;
+                    m_camera.Rotate(movement);
+                }
+            }
+        }
+
         public void Render()
         {
-            foreach(Models m in m_models)
+            foreach (Models m in m_models)
             {
                 m.Render(m_camera.View, m_camera.Projection);
             }
@@ -56,6 +110,11 @@ namespace Editor.Engine
                 m_models.Add(m);
             }
             m_camera.Deserialize(_stream, _content);
+        }
+
+        public override string ToString()
+        {
+            return m_camera.ToString();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Editor.Editor;
 using Editor.Engine;
+using Microsoft.Xna.Framework;
 using System;
 using System.IO;
 using System.Text;
@@ -23,28 +24,47 @@ namespace Editor
             Form gameForm = Control.FromHandle(Game.Window.Handle) as Form;
             gameForm.MouseDown += GameForm_MouseDown;
             gameForm.MouseUp += GameForm_MouseUp;
+            gameForm.MouseWheel += GameForm_MouseWheel;
+            gameForm.MouseMove += GameForm_MouseMove;
             KeyDown += GameForm_KeyDown;
             KeyUp += GameForm_KeyUp;
+        }
+
+        private void GameForm_MouseMove(object sender, MouseEventArgs e)
+        {
+            var p = new Vector2(e.Location.X, e.Location.Y);
+            InputController.Instance.MousePosition = p;
+        }
+
+        private void GameForm_MouseWheel(object sender, MouseEventArgs e)
+        {
+            InputController.Instance.Setwheel(e.Delta / SystemInformation.MouseWheelScrollDelta);
         }
 
         private void GameForm_KeyUp(object sender, KeyEventArgs e)
         {
             InputController.Instance.SetKeyUp(e.KeyCode);
+            e.Handled = true;
         }
 
         private void GameForm_KeyDown(object sender, KeyEventArgs e)
         {
             InputController.Instance.SetKeyDown(e.KeyCode);
+            e.Handled = true;
         }
 
         private void GameForm_MouseUp(object sender, MouseEventArgs e)
         {
             InputController.Instance.SetButtonUp(e.Button);
+            var p = new Vector2(e.Location.X, e.Location.Y);
+            InputController.Instance.DragEnd = p;
         }
 
         private void GameForm_MouseDown(object sender, MouseEventArgs e)
         {
             InputController.Instance.SetButtonDown(e.Button);
+            var p = new Vector2(e.Location.X, e.Location.Y);
+            InputController.Instance.DragStart = p;
         }
 
         private void toolStripStatusLabel1_Click(object sender, EventArgs e)

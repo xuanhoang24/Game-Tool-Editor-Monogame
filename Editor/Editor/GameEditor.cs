@@ -8,6 +8,7 @@ namespace Editor.Editor
     public class GameEditor : Game
     {
         internal Project Project { get; set; }
+
         private GraphicsDeviceManager m_graphics;
         private FormEditor m_parent;
         private SpriteBatch m_spriteBatch;
@@ -48,15 +49,27 @@ namespace Editor.Editor
             m_fonts.LoadContent(Content);
         }
 
-        protected override void Update(GameTime gameTime)
+        protected override void Update(GameTime _gameTime)
         {
             if (Project != null)
             {
-                Project.Update((float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000);
+                Project.Update((float)(_gameTime.ElapsedGameTime.TotalMilliseconds / 1000));
                 InputController.Instance.Clear();
+                var models = Project.CurrentLevel.GetSelectedModels();
+                if (models.Count == 0)
+                {
+                    m_parent.propertyGrid.SelectedObject = null;
+                }
+                else if (models.Count > 1)
+                {
+                    m_parent.propertyGrid.SelectedObject = models.ToArray();
+                }
+                else
+                {
+                    m_parent.propertyGrid.SelectedObject = models[0];
+                }
             }
-
-            base.Update(gameTime);
+            base.Update(_gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
@@ -67,6 +80,7 @@ namespace Editor.Editor
             {
                 GraphicsDevice.RasterizerState = m_rasterState;
                 GraphicsDevice.DepthStencilState = m_depthStencilState;
+
                 Project.Render();
                 m_spriteBatch.Begin();
                 m_fonts.Draw(m_spriteBatch, 20, InputController.Instance.ToString(), new Vector2(20, 20), Color.White);

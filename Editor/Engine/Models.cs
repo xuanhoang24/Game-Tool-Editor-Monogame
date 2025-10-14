@@ -1,13 +1,14 @@
-﻿using Editor.Engine.Interfaces;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Editor.Engine.Interfaces;
 using System.IO;
 
 namespace Editor.Engine
 {
     class Models : ISerializable
     {
+        // Accessors
         public Model Mesh { get; set; }
         public Texture Texture { get; set; }
         public Effect Shader { get; set; }
@@ -16,6 +17,9 @@ namespace Editor.Engine
         public float Scale { get; set; }
         public bool Selected { get; set; } = false;
 
+        // Texturing
+
+        // Members
         private Vector3 m_position;
         private Vector3 m_rotation;
 
@@ -23,12 +27,22 @@ namespace Editor.Engine
         {
         }
 
-        public Models(ContentManager _content, string _model, string _texture, string _effect, Vector3 _position, float _scale)
+        public Models(ContentManager _content,
+                        string _model,
+                        string _texture,
+                        string _effect,
+                        Vector3 _position,
+                        float _scale)
         {
             Create(_content, _model, _texture, _effect, _position, _scale);
         }
-        
-        public void Create(ContentManager _content, string _model, string _texture, string _effect, Vector3 _position, float _scale)
+
+        public void Create(ContentManager _content,
+                            string _model,
+                            string _texture,
+                            string _effect,
+                            Vector3 _position,
+                            float _scale)
         {
             Mesh = _content.Load<Model>(_model);
             Mesh.Tag = _model;
@@ -37,7 +51,7 @@ namespace Editor.Engine
             Shader = _content.Load<Effect>(_effect);
             Shader.Tag = _effect;
             SetShader(Shader);
-            Position = _position;
+            m_position = _position;
             Scale = _scale;
         }
 
@@ -51,6 +65,25 @@ namespace Editor.Engine
                     meshPart.Effect = Shader;
                 }
             }
+        }
+
+        public void Translate(Vector3 _translate, Camera _camera)
+        {
+            float distance = Vector3.Distance(_camera.Target, _camera.Position);
+            Vector3 foward = _camera.Target - _camera.Position;
+            foward.Normalize();
+            Vector3 left = Vector3.Cross(foward, Vector3.Up);
+            left.Normalize();
+            Vector3 up = Vector3.Cross(left, foward);
+            up.Normalize();
+            Position += left * _translate.X * distance;
+            Position += up * _translate.Y * distance;
+            Position += foward * _translate.Z * 100f;
+        }
+
+        public void Rotate(Vector3 _rotate)
+        {
+            Rotation += _rotate;
         }
 
         public Matrix GetTransform()

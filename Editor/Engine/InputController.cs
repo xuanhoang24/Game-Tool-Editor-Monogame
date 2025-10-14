@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using Microsoft.Xna.Framework;
 
 
 namespace Editor.Engine

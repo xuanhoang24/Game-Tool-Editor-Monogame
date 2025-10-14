@@ -34,6 +34,16 @@ namespace Editor.Engine
             m_models.Add(_model);
         }
 
+        public List<Models> GetSelectedModels()
+        {
+            List<Models> models = new List<Models>();
+            foreach (var model in m_models)
+            {
+                if (model.Selected) models.Add(model);
+            }
+            return models;
+        }
+
         public void HandleTranslate()
         {
             InputController ic = InputController.Instance;
@@ -53,8 +63,8 @@ namespace Editor.Engine
             if (ic.IsButtonDown(MouseButtons.Middle))
             {
                 Vector2 dir = ic.MousePosition - ic.LastPosition;
-                translate.X = -dir.X;
-                translate.Y = dir.Y;
+                translate.X = dir.X;
+                translate.Y = -dir.Y;
             }
 
             if (ic.GetWheel() != 0)
@@ -64,26 +74,66 @@ namespace Editor.Engine
 
             if (translate != Vector3.Zero)
             {
-                m_camera.Translate(translate * 0.001f);
+                bool modelTranslate = false;
+                foreach (Models model in m_models)
+                {
+                    if (model.Selected)
+                    {
+                        modelTranslate = true;
+                        model.Translate(translate / 1000, m_camera);
+                    }
+                }
+                if (!modelTranslate)
+                {
+                    m_camera.Translate(translate * 0.001f);
+                }
             }
-
-
         }
 
         private void HandleRotate(float _delta)
         {
             InputController ic = InputController.Instance;
-            if (ic.IsButtonDown(MouseButtons.Right))
+            if (ic.IsButtonDown(MouseButtons.Right) && (!ic.IsKeyDown(Keys.Menu)))
             {
                 Vector2 dir = ic.MousePosition - ic.LastPosition;
                 if (dir != Vector2.Zero)
                 {
                     Vector3 movement = new Vector3(dir.Y, dir.X, 0) * _delta;
-                    m_camera.Rotate(movement);
+                    bool modelRotate = false;
+                    foreach (Models model in m_models)
+                    {
+                        if (model.Selected)
+                        {
+                            modelRotate = true;
+                            model.Rotate(movement);
+                        }
+                    }
+                    if (!modelRotate)
+                    {
+                        m_camera.Rotate(movement);
+                    }
                 }
             }
         }
-
+        private void HandleScale(float _delta)
+        {
+            InputController ic = InputController.Instance;
+            if (ic.IsButtonDown(MouseButtons.Right) && (ic.IsKeyDown(Keys.Menu)))
+            {
+                float l = ic.MousePosition.X - ic.LastPosition.X;
+                if (l != 0)
+                {
+                    l *= _delta;
+                    foreach (Models model in m_models)
+                    {
+                        if (model.Selected)
+                        {
+                            model.Scale += l;
+                        }
+                    }
+                }
+            }
+        }
         private void HandlePick()
         {
             InputController ic = InputController.Instance;
@@ -111,6 +161,7 @@ namespace Editor.Engine
         {
             HandleTranslate();
             HandleRotate(_delta);
+            HandleScale(_delta);
             HandlePick();
         }
 
@@ -146,7 +197,15 @@ namespace Editor.Engine
 
         public override string ToString()
         {
-            return m_camera.ToString();
+            string s = string.Empty;
+            foreach (Models m in m_models)
+            {
+                if (m.Selected)
+                {
+                    s += "\nModel: Pos: " + m.Position.ToString() + " Rot: " + m.Rotation.ToString();
+                }
+            }
+            return m_camera.ToString() + s;
         }
     }
 }

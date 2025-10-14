@@ -17,6 +17,8 @@ namespace Editor.Engine
         private List<Models> m_models = new();
         private Camera m_camera = new(new Vector3(0, 0, -20), 16 / 9);
 
+        public bool SelectionChanged { get; set; } = false;
+
         public Level()
         {
         }
@@ -115,6 +117,7 @@ namespace Editor.Engine
                 }
             }
         }
+
         private void HandleScale(float _delta)
         {
             InputController ic = InputController.Instance;
@@ -134,15 +137,20 @@ namespace Editor.Engine
                 }
             }
         }
+
         private void HandlePick()
         {
             InputController ic = InputController.Instance;
             if (ic.IsButtonDown(MouseButtons.Left))
             {
+                bool selectionChanged = false;
                 Ray r = ic.GetPickRay(m_camera);
+
                 foreach (Models model in m_models)
                 {
+                    bool wasSelected = model.Selected;
                     model.Selected = false;
+
                     foreach (ModelMesh mesh in model.Mesh.Meshes)
                     {
                         BoundingSphere s = mesh.BoundingSphere;
@@ -153,6 +161,15 @@ namespace Editor.Engine
                             model.Selected = true;
                         }
                     }
+
+                    if (wasSelected != model.Selected)
+                    {
+                        selectionChanged = true;
+                    }
+                }
+                if (selectionChanged == true)
+                {
+                    SelectionChanged = true;
                 }
             }
         }

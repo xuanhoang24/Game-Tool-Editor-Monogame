@@ -55,18 +55,24 @@ namespace Editor.Editor
             {
                 Project.Update((float)(_gameTime.ElapsedGameTime.TotalMilliseconds / 1000));
                 InputController.Instance.Clear();
-                var models = Project.CurrentLevel.GetSelectedModels();
-                if (models.Count == 0)
+
+                if (Project.CurrentLevel.SelectionChanged == true)
                 {
-                    m_parent.propertyGrid.SelectedObject = null;
-                }
-                else if (models.Count > 1)
-                {
-                    m_parent.propertyGrid.SelectedObject = models.ToArray();
-                }
-                else
-                {
-                    m_parent.propertyGrid.SelectedObject = models[0];
+                    Project.CurrentLevel.SelectionChanged = false;
+
+                    var models = Project.CurrentLevel.GetSelectedModels();
+                    if (models.Count == 0)
+                    {
+                        m_parent.propertyGrid.SelectedObject = null;
+                    }
+                    else if (models.Count > 1)
+                    {
+                        m_parent.propertyGrid.SelectedObject = models.ToArray();
+                    }
+                    else
+                    {
+                        m_parent.propertyGrid.SelectedObject = models[0];
+                    }
                 }
             }
             base.Update(_gameTime);

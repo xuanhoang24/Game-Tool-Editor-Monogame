@@ -7,6 +7,7 @@ using System.IO;
 
 namespace Editor.Engine
 {
+    [DefaultProperty(nameof(Position))]
     class Models : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
@@ -19,6 +20,10 @@ namespace Editor.Engine
         [Browsable(false)]
         public Effect Shader { get; set; }
 
+        // Properties Grid Category
+        [Category("Transformation")]
+        [DisplayName("Position")]
+        [Description("Position of the model in world space.")]
         public Vector3 Position
         {
             get => m_position;
@@ -32,6 +37,9 @@ namespace Editor.Engine
             }
         }
 
+        [Category("Transformation")]
+        [DisplayName("Rotation")]
+        [Description("Rotation of the model in world space.")]
         public Vector3 Rotation
         {
             get => m_rotation;
@@ -45,6 +53,9 @@ namespace Editor.Engine
             }
         }
 
+        [Category("Transformation")]
+        [DisplayName("Scale")]
+        [Description("Scale of the model.")]
         public float Scale
         {
             get => m_scale;

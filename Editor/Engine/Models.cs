@@ -12,8 +12,11 @@ namespace Editor.Engine
         public event PropertyChangedEventHandler PropertyChanged;
 
         // Accessors
+        [Browsable(false)]
         public Model Mesh { get; set; }
+        [Browsable(false)]
         public Texture Texture { get; set; }
+        [Browsable(false)]
         public Effect Shader { get; set; }
 
         public Vector3 Position

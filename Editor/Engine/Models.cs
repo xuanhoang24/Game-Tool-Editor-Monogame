@@ -11,16 +11,56 @@ namespace Editor.Engine
     class Models : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
+        public enum DiffuseType
+        {
+            Metal,
+            Grass,
+            HeightMap
+        }
+
+        // Members
+        private ContentManager m_content;
+        private Vector3 m_position;
+        private Vector3 m_rotation;
+        private float m_scale;
+        private DiffuseType m_diffuseTexture = DiffuseType.Metal;
 
         // Accessors
         [Browsable(false)]
         public Model Mesh { get; set; }
+
         [Browsable(false)]
         public Texture Texture { get; set; }
+
         [Browsable(false)]
         public Effect Shader { get; set; }
 
         // Properties Grid Category
+        // Appearance
+        [Category("Appearance")]
+        [DisplayName("Diffuse Texture")]
+        [Description("Diffuse texture of the model.")]
+        public DiffuseType DiffuseTexture
+        {
+            get => m_diffuseTexture;
+            set
+            {
+                if (m_diffuseTexture != value)
+                {
+                    m_diffuseTexture = value;
+                    UpdateTexture();
+                    OnPropertyChanged(nameof(DiffuseTexture));
+                }
+            }
+        }
+
+        // State
+        [Category("State")]
+        [DisplayName("Selected")]
+        [Description("Selection status.")]
+        public bool Selected { get; set; } = false;
+
+        // Transformation
         [Category("Transformation")]
         [DisplayName("Position")]
         [Description("Position of the model in world space.")]
@@ -69,13 +109,6 @@ namespace Editor.Engine
             }
         }
 
-        public bool Selected { get; set; } = false;
-
-        // Members
-        private Vector3 m_position;
-        private Vector3 m_rotation;
-        private float m_scale;
-
         public Models()
         {
         }
@@ -97,6 +130,7 @@ namespace Editor.Engine
                             Vector3 _position,
                             float _scale)
         {
+            m_content = _content;
             Mesh = _content.Load<Model>(_model);
             Mesh.Tag = _model;
             Texture = _content.Load<Texture>(_texture);
@@ -118,6 +152,13 @@ namespace Editor.Engine
                     meshPart.Effect = Shader;
                 }
             }
+        }
+
+        private void UpdateTexture()
+        {
+            if (m_content == null) return;
+            string textureName = m_diffuseTexture.ToString();
+            Texture = m_content.Load<Texture>(textureName);
         }
 
         public void Translate(Vector3 _translate, Camera _camera)

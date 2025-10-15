@@ -74,6 +74,12 @@ namespace Editor.Editor
                         m_parent.propertyGrid.SelectedObject = models[0];
                     }
                 }
+
+                if (Project.CurrentLevel.PropertyChanged == true)
+                {
+                    Project.CurrentLevel.PropertyChanged = false;
+                    m_parent.propertyGrid.Refresh();
+                }
             }
             base.Update(_gameTime);
         }

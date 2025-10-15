@@ -1,20 +1,60 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Editor.Engine.Interfaces;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Editor.Engine.Interfaces;
+using System.ComponentModel;
 using System.IO;
 
 namespace Editor.Engine
 {
-    class Models : ISerializable
+    class Models : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
         // Accessors
         public Model Mesh { get; set; }
         public Texture Texture { get; set; }
         public Effect Shader { get; set; }
-        public Vector3 Position { get => m_position; set { m_position = value; } }
-        public Vector3 Rotation { get => m_rotation; set { m_rotation = value; } }
-        public float Scale { get; set; }
+
+        public Vector3 Position
+        {
+            get => m_position;
+            set
+            {
+                if (m_position != value)
+                {
+                    m_position = value;
+                    OnPropertyChanged(nameof(Position));
+                }
+            }
+        }
+
+        public Vector3 Rotation
+        {
+            get => m_rotation;
+            set
+            {
+                if (m_rotation != value)
+                {
+                    m_rotation = value;
+                    OnPropertyChanged(nameof(Rotation));
+                }
+            }
+        }
+
+        public float Scale
+        {
+            get => m_scale;
+            set
+            {
+                if (m_scale != value)
+                {
+                    m_scale = value;
+                    OnPropertyChanged(nameof(Scale));
+                }
+            }
+        }
+
         public bool Selected { get; set; } = false;
 
         // Texturing
@@ -22,6 +62,7 @@ namespace Editor.Engine
         // Members
         private Vector3 m_position;
         private Vector3 m_rotation;
+        private float m_scale;
 
         public Models()
         {
@@ -125,6 +166,11 @@ namespace Editor.Engine
             Rotation = HelpDeserialize.Vec3(_stream);
             Scale = _stream.ReadSingle();
             Create(_content, mesh, texture, shader, Position, Scale);
+        }
+
+        protected void OnPropertyChanged(string name)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
     }
 }

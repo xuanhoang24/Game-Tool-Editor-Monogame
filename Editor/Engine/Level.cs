@@ -5,6 +5,7 @@ using Editor.Engine.Interfaces;
 using System.IO;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Editor.Engine
 {
@@ -18,6 +19,7 @@ namespace Editor.Engine
         private Camera m_camera = new(new Vector3(0, 0, -20), 16 / 9);
 
         public bool SelectionChanged { get; set; } = false;
+        public bool PropertyChanged { get; set; } = false;
 
         public Level()
         {
@@ -165,6 +167,14 @@ namespace Editor.Engine
                     if (wasSelected != model.Selected)
                     {
                         selectionChanged = true;
+                        if(model.Selected == true)
+                        {
+                            model.PropertyChanged += NotifyPropertyChanged;
+                        }
+                        else
+                        {
+                            model.PropertyChanged -= NotifyPropertyChanged;
+                        }
                     }
                 }
                 if (selectionChanged == true)
@@ -223,6 +233,11 @@ namespace Editor.Engine
                 }
             }
             return m_camera.ToString() + s;
+        }
+
+        public void NotifyPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            PropertyChanged = true;
         }
     }
 }

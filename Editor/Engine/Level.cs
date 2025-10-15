@@ -27,9 +27,7 @@ namespace Editor.Engine
 
         public void LoadContent(ContentManager _content)
         {
-            Models teapot = new(_content, "Teapot", "Metal", "MyShader", Vector3.Zero, 1.0f);
-            AddModel(teapot);
-            teapot = new(_content, "Teapot", "Metal", "MyShader", new Vector3(1, 0, 0), 1.0f);
+            Models teapot = new(_content, "Teapot", "Metal", "MyShader", Vector3.Zero, 15.0f);
             AddModel(teapot);
         }
 

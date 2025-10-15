@@ -57,8 +57,6 @@ namespace Editor.Engine
 
         public bool Selected { get; set; } = false;
 
-        // Texturing
-
         // Members
         private Vector3 m_position;
         private Vector3 m_rotation;

@@ -79,7 +79,7 @@ namespace Editor.Engine
 
         [Category("Transformation")]
         [DisplayName("Rotation")]
-        [Description("Rotation of the model in world space.")]
+        [Description("Rotation of the model.")]
         public Vector3 Rotation
         {
             get => m_rotation;

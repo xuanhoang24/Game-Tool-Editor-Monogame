@@ -21,6 +21,12 @@ namespace Editor.Engine
         public bool SelectionChanged { get; set; } = false;
         public bool PropertyChanged { get; set; } = false;
 
+
+        public void NotifyPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            PropertyChanged = true;
+        }
+
         public Level()
         {
         }
@@ -148,7 +154,7 @@ namespace Editor.Engine
 
                 foreach (Models model in m_models)
                 {
-                    bool wasSelected = model.Selected;
+                    bool selecting = model.Selected;
                     model.Selected = false;
 
                     foreach (ModelMesh mesh in model.Mesh.Meshes)
@@ -162,7 +168,7 @@ namespace Editor.Engine
                         }
                     }
 
-                    if (wasSelected != model.Selected)
+                    if (selecting != model.Selected)
                     {
                         selectionChanged = true;
                         if(model.Selected == true)
@@ -233,9 +239,5 @@ namespace Editor.Engine
             return m_camera.ToString() + s;
         }
 
-        public void NotifyPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            PropertyChanged = true;
-        }
     }
 }

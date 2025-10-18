@@ -8,7 +8,7 @@ using System.IO;
 namespace Editor.Engine
 {
     [DefaultProperty(nameof(Position))]
-    class Models : INotifyPropertyChanged
+    class Models : ISerializable, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
         public enum DiffuseType
@@ -154,13 +154,6 @@ namespace Editor.Engine
             }
         }
 
-        private void UpdateTexture()
-        {
-            if (m_content == null) return;
-            string textureName = m_diffuseTexture.ToString();
-            Texture = m_content.Load<Texture>(textureName);
-        }
-
         public void Translate(Vector3 _translate, Camera _camera)
         {
             float distance = Vector3.Distance(_camera.Target, _camera.Position);
@@ -185,6 +178,13 @@ namespace Editor.Engine
             return Matrix.CreateScale(Scale) *
                    Matrix.CreateFromYawPitchRoll(Rotation.Y, Rotation.X, Rotation.Z) *
                    Matrix.CreateTranslation(Position);
+        }
+
+        private void UpdateTexture()
+        {
+            if (m_content == null) return;
+            string textureName = m_diffuseTexture.ToString();
+            Texture = m_content.Load<Texture>(textureName);
         }
 
         public void Render(Matrix _view, Matrix _projection)

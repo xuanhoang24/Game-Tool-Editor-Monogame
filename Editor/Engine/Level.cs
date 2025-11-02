@@ -1,10 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
 using Editor.Engine.Interfaces;
 using System.IO;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Editor.Engine
 {
@@ -34,13 +34,14 @@ namespace Editor.Engine
             m_models.Add(_model);
         }
 
-        public List<Models> GetSelectedModels()
+        public List<ISelectable> GetSelectedModels()
         {
-            List<Models> models = new List<Models>();
+            List<ISelectable> models = new();
             foreach (var model in m_models)
             {
                 if (model.Selected) models.Add(model);
             }
+            if(m_terrain.Selected) models.Add(m_terrain);
             return models;
         }
 
@@ -134,8 +135,11 @@ namespace Editor.Engine
                 }
             }
         }
+
         private void HandlePick()
         {
+            float? f;
+            Matrix transform = Matrix.Identity;
             InputController ic = InputController.Instance;
             if (ic.IsButtonDown(MouseButtons.Left))
             {
@@ -143,21 +147,31 @@ namespace Editor.Engine
                 foreach (Models model in m_models)
                 {
                     model.Selected = false;
-                    Matrix transform = model.GetTransform();
+                    transform = model.GetTransform();
                     foreach (ModelMesh mesh in model.Mesh.Meshes)
                     {
                         BoundingSphere s = mesh.BoundingSphere;
                         s.Transform(ref transform, out s);
-                        float? f = r.Intersects(s);
+                        f = r.Intersects(s);
                         if (f.HasValue)
                         {
-                            f = HelpMath.PickTriangle(in mesh, ref r, ref transform);
+                            //f = HelpMath.PickTriangle(in mesh, ref r, ref transform);
+                            f = HelpMath.PickTriangle(in m_terrain, ref r, ref transform);
                             if (f.HasValue)
                             {
                                 model.Selected = true;
                             }
                         }
                     }
+                }
+
+                //Check terrain
+                transform = Matrix.Identity;
+                f = HelpMath.PickTriangle(in m_terrain, ref r, ref transform);
+                m_terrain.Selected = false;
+                if(f.HasValue)
+                {
+                    m_terrain.Selected = true;
                 }
             }
         }

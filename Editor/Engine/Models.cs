@@ -6,7 +6,7 @@ using System.IO;
 
 namespace Editor.Engine
 {
-    class Models : ISerializable
+    class Models : ISerializable, ISelectable
     {
         // Accessors
         public Model Mesh { get; set; }

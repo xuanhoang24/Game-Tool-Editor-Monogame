@@ -9,10 +9,16 @@ namespace Editor.Editor
 {
     internal class Project : ISerializable
     {
+        public event AssetUpdated OnAssetUpdated;
+
         public Level CurrentLevel { get; private set; } = null;
         public List<Level> Levels { get; private set; } = new();
         public string Folder { get; private set; } = string.Empty;
+        public string ContentFolder { get; private set; } = string.Empty;
+        public string AssetFolder { get; private set; } = string.Empty;
+        public string ObjectFolder { get; private set; } = string.Empty;
         public string Name { get; private set; } = string.Empty;
+        public AssetMonitor AssetMonitor { get; private set; } = null;
 
         public Project()
         {
@@ -27,8 +33,28 @@ namespace Editor.Editor
                 Name += ".oce";
             }
 
+            // Create Content folder for asset, and copy the mgcb template
+            ContentFolder = Path.Combine(Folder, "Content");
+            AssetFolder = Path.Combine(ContentFolder, "bin");
+            ObjectFolder = Path.Combine(ContentFolder, "obj");
+            char d = Path.DirectorySeparatorChar;
+            if (!Directory.Exists(ContentFolder))
+            {
+                Directory.CreateDirectory(ContentFolder);
+                Directory.CreateDirectory(AssetFolder);
+                Directory.CreateDirectory(ObjectFolder);
+                File.Copy($"ContentTemplate.mgcb", ContentFolder + $"{d}Content.mgcb");
+            }
+            AssetMonitor = new(ObjectFolder);
+            AssetMonitor.OnAssetUpdated += AssetMon_OnAssetsUpdated;
+           
             // Add a default level
             AddLevel(_device, _content);
+        }
+
+        private void AssetMon_OnAssetsUpdated()
+        {
+            OnAssetUpdated?.Invoke();
         }
 
         public void AddLevel(GraphicsDevice _device, ContentManager _content)

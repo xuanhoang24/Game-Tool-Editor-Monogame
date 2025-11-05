@@ -1,5 +1,6 @@
 ﻿using Editor.Editor;
 using Editor.Engine;
+using Editor.GUI;
 using Microsoft.Xna.Framework;
 using System;
 using System.Configuration;
@@ -100,6 +101,7 @@ namespace Editor
             {
                 Game.Project = new(Game.GraphicsDevice, Game.Content, sfd.FileName);
                 Game.Project.OnAssetUpdated += Project_OnAssetUpdated;
+                Game.Project.AssetMonitor.UpdateAssetDB();
                 Text = "Our Cool Editor - " + Game.Project.Name;
                 Game.AdjustAspectRatio();
             }
@@ -112,9 +114,30 @@ namespace Editor
                 listBoxAssets.Items.Clear();
                 var assets = Game.Project.AssetMonitor.Assets;
                 if (!assets.ContainsKey(AssetTypes.MODEL)) return;
-                foreach (string asset in assets[AssetTypes.MODEL])
+                foreach (AssetTypes assetType in Enum.GetValues(typeof(AssetTypes)))
                 {
-                    listBoxAssets.Items.Add(asset);
+                    if(assets.ContainsKey(assetType))
+                    {
+                        listBoxAssets.Items.Add(new ListItemAsset()
+                        {
+                            Name = assetType.ToString().ToUpper() + "S:",
+                            Type = AssetTypes.NONE
+                        });
+                        foreach (string asset in assets[assetType])
+                        {
+                            ListItemAsset lia =new()
+                            {
+                                Name = asset,
+                                Type = assetType
+                            };
+                            listBoxAssets.Items.Add(asset);
+                        }
+                        listBoxAssets.Items.Add(new ListItemAsset()
+                        {
+                            Name = "",
+                            Type = AssetTypes.NONE
+                        });
+                    }
                 }
             });
         }

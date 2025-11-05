@@ -5,6 +5,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using Microsoft.Xna.Framework.Graphics;
+using Editor.Editor;
 
 namespace Editor.Engine
 {
@@ -25,8 +26,8 @@ namespace Editor.Engine
 
         public void LoadContent(GraphicsDevice _device, ContentManager _content)
         {
-            m_terrainEffect = _content.Load<Effect>("TerrainEffect");
-            m_terrain = new(_content.Load<Texture2D>("HeightMap"), _content.Load<Texture2D>("Grass"), 200, _device);
+            /*m_terrainEffect = _content.Load<Effect>("TerrainEffect");
+            m_terrain = new(_content.Load<Texture2D>("HeightMap"), _content.Load<Texture2D>("Grass"), 200, _device);*/
         }
 
         public void AddModel(Models _model)
@@ -41,7 +42,10 @@ namespace Editor.Engine
             {
                 if (model.Selected) models.Add(model);
             }
-            if(m_terrain.Selected) models.Add(m_terrain);
+            if (m_terrainEffect != null)
+            {
+                if (m_terrain.Selected) models.Add(m_terrain);
+            }
             return models;
         }
 
@@ -190,8 +194,10 @@ namespace Editor.Engine
             {
                 m.Render(m_camera.View, m_camera.Projection);
             }
-
-            m_terrain.Draw(m_terrainEffect, m_camera.View, m_camera.Projection);
+            if (m_terrain != null)
+            {
+                m_terrain.Draw(m_terrainEffect, m_camera.View, m_camera.Projection);
+            }
         }
 
         public void Serialize(BinaryWriter _stream)
@@ -204,16 +210,16 @@ namespace Editor.Engine
             m_camera.Serialize(_stream);
         }
 
-        public void Deserialize(BinaryReader _stream, ContentManager _content)
+        public void Deserialize(BinaryReader _stream, GameEditor _game)
         {
             int modelCount = _stream.ReadInt32();
             for (int count = 0; count < modelCount; count++)
             {
                 Models m = new();
-                m.Deserialize(_stream, _content);
+                m.Deserialize(_stream, _game);
                 m_models.Add(m);
             }
-            m_camera.Deserialize(_stream, _content);
+            m_camera.Deserialize(_stream, _game);
         }
 
         public override string ToString()

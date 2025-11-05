@@ -8,6 +8,8 @@ namespace Editor.Editor
     public class GameEditor : Game
     {
         internal Project Project { get; set; }
+        internal Texture DefaultTexture { get; set; }
+        internal Effect DefaultEffect { get; set; }
 
         private GraphicsDeviceManager m_graphics;
         private FormEditor m_parent;
@@ -47,15 +49,14 @@ namespace Editor.Editor
             m_spriteBatch = new(GraphicsDevice);
             m_fonts = new();
             m_fonts.LoadContent(Content);
+            DefaultTexture = Content.Load<Texture>("DefaultTexture");
+            DefaultEffect = Content.Load<Effect>("DefaultShader");
         }
 
-        protected override void Update(GameTime _gameTime)
+        private void UpdateSelected()
         {
-            if (Project != null)
+            if(Models.SelectedDirty)
             {
-                Content.RootDirectory = Project.ContentFolder + "\\bin";
-                Project.Update((float)(_gameTime.ElapsedGameTime.TotalMilliseconds / 1000));
-                InputController.Instance.Clear();
                 var models = Project.CurrentLevel.GetSelectedModels();
                 if (models.Count == 0)
                 {
@@ -69,6 +70,18 @@ namespace Editor.Editor
                 {
                     m_parent.propertyGrid.SelectedObject = models[0];
                 }
+            }
+            Models.SelectedDirty = false;
+        }
+
+        protected override void Update(GameTime _gameTime)
+        {
+            if (Project != null)
+            {
+                Content.RootDirectory = Project.ContentFolder + "\\bin";
+                Project.Update((float)(_gameTime.ElapsedGameTime.TotalMilliseconds / 1000));
+                InputController.Instance.Clear();
+                UpdateSelected();
             }
             base.Update(_gameTime);
         }

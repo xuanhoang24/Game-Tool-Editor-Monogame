@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Editor.Engine.Interfaces;
 using System.IO;
 using System.Collections.Generic;
@@ -17,17 +16,15 @@ namespace Editor.Engine
         // Members
         private List<Models> m_models = new();
         private Camera m_camera = new(new Vector3(0, 400, 500), 16 / 9);
-        private Effect m_terrainEffect = null;
         private Terrain m_terrain = null;
 
         public Level()
         {
         }
 
-        public void LoadContent(GraphicsDevice _device, ContentManager _content)
+        public void LoadContent(GameEditor _game)
         {
-            /*m_terrainEffect = _content.Load<Effect>("TerrainEffect");
-            m_terrain = new(_content.Load<Texture2D>("HeightMap"), _content.Load<Texture2D>("Grass"), 200, _device);*/
+            m_terrain = new(_game.DefaultEffect, _game.DefaultHeightMap, _game.DefaultGrass, 200, _game.GraphicsDevice);
         }
 
         public void AddModel(Models _model)
@@ -42,7 +39,7 @@ namespace Editor.Engine
             {
                 if (model.Selected) models.Add(model);
             }
-            if (m_terrainEffect != null)
+            if (m_terrain != null)
             {
                 if (m_terrain.Selected) models.Add(m_terrain);
             }
@@ -140,17 +137,17 @@ namespace Editor.Engine
             }
         }
 
-        private void HandlePick()
+        internal ISelectable HandlePick(bool _select = true)
         {
             float? f;
             Matrix transform = Matrix.Identity;
             InputController ic = InputController.Instance;
-            if (ic.IsButtonDown(MouseButtons.Left))
+            if ((ic.IsButtonDown(MouseButtons.Left)) || (!_select))
             {
                 Ray r = HelpMath.GetPickRay(ic.MousePosition, m_camera);
                 foreach (Models model in m_models)
                 {
-                    model.Selected = false;
+                    if (_select) model.Selected = false;
                     transform = model.GetTransform();
                     foreach (ModelMesh mesh in model.Mesh.Meshes)
                     {
@@ -163,21 +160,27 @@ namespace Editor.Engine
                             f = HelpMath.PickTriangle(in m_terrain, ref r, ref transform);
                             if (f.HasValue)
                             {
+                                if (!_select) return model;
                                 model.Selected = true;
                             }
                         }
                     }
                 }
 
-                //Check terrain
-                transform = Matrix.Identity;
-                f = HelpMath.PickTriangle(in m_terrain, ref r, ref transform);
-                m_terrain.Selected = false;
-                if(f.HasValue)
+                if (m_terrain != null)
                 {
-                    m_terrain.Selected = true;
+                    //Check terrain
+                    transform = Matrix.Identity;
+                    f = HelpMath.PickTriangle(in m_terrain, ref r, ref transform);
+                    m_terrain.Selected = false;
+                    if (f.HasValue)
+                    {
+                        if (!_select) return m_terrain;
+                        m_terrain.Selected = true;
+                    }
                 }
             }
+            return null;
         }
 
         public void Update(float _delta)
@@ -192,11 +195,11 @@ namespace Editor.Engine
         {
             foreach (Models m in m_models)
             {
-                m.Render(m_camera.View, m_camera.Projection);
+                m.Render(m_camera);
             }
             if (m_terrain != null)
             {
-                m_terrain.Draw(m_terrainEffect, m_camera.View, m_camera.Projection);
+                m_terrain.Render(m_camera);
             }
         }
 

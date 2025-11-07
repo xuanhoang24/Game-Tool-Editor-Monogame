@@ -9,14 +9,16 @@ namespace Editor.Editor
     {
         internal Project Project { get; set; }
         internal Texture DefaultTexture { get; set; }
+        internal Texture2D DefaultGrass { get; set; }
+        internal Texture2D DefaultHeightMap { get; set; }
         internal Effect DefaultEffect { get; set; }
 
         private GraphicsDeviceManager m_graphics;
         private FormEditor m_parent;
         private SpriteBatch m_spriteBatch;
         private FontController m_fonts;
-        RasterizerState m_rasterState = new RasterizerState();
-        DepthStencilState m_depthStencilState = new DepthStencilState();
+        private RasterizerState m_rasterState = new RasterizerState();
+        private DepthStencilState m_depthStencilState = new DepthStencilState();
 
         public GameEditor()
         {
@@ -50,6 +52,8 @@ namespace Editor.Editor
             m_fonts = new();
             m_fonts.LoadContent(Content);
             DefaultTexture = Content.Load<Texture>("DefaultTexture");
+            DefaultGrass = Content.Load<Texture2D>("DefaultGrass");
+            DefaultHeightMap = Content.Load<Texture2D>("DefaultHeightMap");
             DefaultEffect = Content.Load<Effect>("DefaultShader");
         }
 

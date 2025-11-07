@@ -41,7 +41,6 @@
             toolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             splitContainer = new System.Windows.Forms.SplitContainer();
             splitContainer1 = new System.Windows.Forms.SplitContainer();
-            propertyGrid1 = new System.Windows.Forms.PropertyGrid();
             listBoxAssets = new System.Windows.Forms.ListBox();
             propertyGrid = new System.Windows.Forms.PropertyGrid();
             menuStrip1.SuspendLayout();
@@ -149,7 +148,6 @@
             // splitContainer.Panel2
             // 
             splitContainer.Panel2.Controls.Add(splitContainer1);
-            splitContainer.Panel2.Controls.Add(propertyGrid);
             splitContainer.Size = new System.Drawing.Size(800, 404);
             splitContainer.SplitterDistance = 562;
             splitContainer.TabIndex = 2;
@@ -163,7 +161,7 @@
             // 
             // splitContainer1.Panel1
             // 
-            splitContainer1.Panel1.Controls.Add(propertyGrid1);
+            splitContainer1.Panel1.Controls.Add(propertyGrid);
             // 
             // splitContainer1.Panel2
             // 
@@ -171,14 +169,6 @@
             splitContainer1.Size = new System.Drawing.Size(234, 404);
             splitContainer1.SplitterDistance = 203;
             splitContainer1.TabIndex = 1;
-            // 
-            // propertyGrid1
-            // 
-            propertyGrid1.Dock = System.Windows.Forms.DockStyle.Fill;
-            propertyGrid1.Location = new System.Drawing.Point(0, 0);
-            propertyGrid1.Name = "propertyGrid1";
-            propertyGrid1.Size = new System.Drawing.Size(234, 203);
-            propertyGrid1.TabIndex = 0;
             // 
             // listBoxAssets
             // 
@@ -195,7 +185,7 @@
             propertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             propertyGrid.Location = new System.Drawing.Point(0, 0);
             propertyGrid.Name = "propertyGrid";
-            propertyGrid.Size = new System.Drawing.Size(234, 404);
+            propertyGrid.Size = new System.Drawing.Size(234, 203);
             propertyGrid.TabIndex = 0;
             // 
             // FormEditor
@@ -239,7 +229,6 @@
         private System.Windows.Forms.ToolStripMenuItem loadToolStripMenuItem;
         public System.Windows.Forms.PropertyGrid propertyGrid;
         private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.PropertyGrid propertyGrid1;
         private System.Windows.Forms.ListBox listBoxAssets;
         private System.Windows.Forms.ToolStripMenuItem assetsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem importToolStripMenuItem;

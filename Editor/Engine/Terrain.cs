@@ -1,10 +1,11 @@
-﻿using Editor.Engine.Interfaces;
+﻿using Editor.Editor;
+using Editor.Engine.Interfaces;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Editor.Engine
 {
-    class Terrain : ISelectable
+    class Terrain : ISelectable, IMaterial
     {
         public VertexPositionNormalTexture[] Vertices { get; set; } // Vertex array
         public VertexBuffer VertexBuffer { get; set; } // Vertex Buffer
@@ -19,13 +20,15 @@ namespace Editor.Engine
         public GraphicsDevice Device { get; set; } // The graphics device for rendering
         public Vector3 LightDirection { get; set; } // Direction light is emanating from
         public Texture2D HeightMap { get; set; } // Heightmap texture
-        public Texture2D BaseTexture { get; set; } // The terrain diffuse texture
+        public Material Material { get; private set; }
         public bool Selected { get; set; } = false;
 
-        public Terrain(Texture2D _heightMap, Texture2D _baseTexture, int _height, GraphicsDevice _device)
+        public Terrain(Effect _effect, Texture2D _heightMap, Texture2D _baseTexture, int _height, GraphicsDevice _device)
         {
+            Material = new Material();
             HeightMap = _heightMap;
-            BaseTexture = _baseTexture;
+            Material.Diffuse = _baseTexture;
+            Material.Effect = _effect;
             Device = _device;
             Width = _heightMap.Width;
             Length = _heightMap.Height;
@@ -43,6 +46,32 @@ namespace Editor.Engine
 
             VertexBuffer.SetData<VertexPositionNormalTexture>(Vertices);
             IndexBuffer.SetData<int>(Indices);
+        }
+
+        public void SetTexture(GameEditor _game, string _texture)
+        {
+            if(_texture == "DefaultTexture")
+            {
+                Material.Diffuse = _game.DefaultTexture;
+            }
+            else
+            {
+                Material.Diffuse = _game.Content.Load<Texture>(_texture);
+            }
+            Material.Diffuse.Tag = _texture;
+        }
+
+        public void SetShader(GameEditor _game, string _effect)
+        {
+            if ( _effect == "DefaultEffect")
+            {
+                Material.Effect = _game.DefaultEffect;
+            }
+            else
+            {
+                Material.Effect = _game.Content.Load<Effect>(_effect);
+            }
+            Material.Effect.Tag = _effect;
         }
 
         private void GetHeights()
@@ -134,19 +163,22 @@ namespace Editor.Engine
             }
         }
 
-        public void Draw(Effect _effect, Matrix _view, Matrix _projection)
+        public void Render(Camera _camera)
         {
-            _effect.Parameters["View"].SetValue(_view);
-            _effect.Parameters["Projection"].SetValue(_projection);
-            _effect.Parameters["BaseTexture"].SetValue(BaseTexture);
-            _effect.Parameters["TextureTiling"].SetValue(15.0f);
-            _effect.Parameters["LightDirection"].SetValue(LightDirection);
-            _effect.Parameters["Tint"].SetValue(Selected);
+            Material.Effect.Parameters["World"]?.SetValue(Matrix.Identity);
+            Material.Effect.Parameters["WorldViewProjection"]?.SetValue(Matrix.Identity * _camera.View * _camera.Projection);
+            Material.Effect.Parameters["CameraPosition"]?.SetValue(_camera.Position);
+            Material.Effect.Parameters["View"]?.SetValue(_camera.View);
+            Material.Effect.Parameters["Projection"]?.SetValue(_camera.Projection);
+            Material.Effect.Parameters["TextureTiling"]?.SetValue(15.0f);
+            Material.Effect.Parameters["LightDirection"]?.SetValue(LightDirection);
+            Material.Effect.Parameters["Texture"]?.SetValue(Material.Diffuse);
+            Material.Effect.Parameters["Tint"]?.SetValue(Selected);
 
             Device.SetVertexBuffer(VertexBuffer);
             Device.Indices = IndexBuffer;
 
-            foreach(EffectPass pass in _effect.CurrentTechnique.Passes)
+            foreach(EffectPass pass in Material.Effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
                 Device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, IndexCount / 3);

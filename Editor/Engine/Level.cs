@@ -156,8 +156,7 @@ namespace Editor.Engine
                         f = r.Intersects(s);
                         if (f.HasValue)
                         {
-                            //f = HelpMath.PickTriangle(in mesh, ref r, ref transform);
-                            f = HelpMath.PickTriangle(in m_terrain, ref r, ref transform);
+                            f = HelpMath.PickTriangle(in mesh, ref r, ref transform);
                             if (f.HasValue)
                             {
                                 if (!_select) return model;

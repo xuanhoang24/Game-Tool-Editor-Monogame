@@ -1,9 +1,0 @@
-﻿#-------------------------------- Global Properties ------------------------------------#
-
-/outputDir:bin/
-/intermediateDir:obj/
-/config:
-/profile:Reach
-/compress:False
-
-#------------------------------------ References ---------------------------------------#

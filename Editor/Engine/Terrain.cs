@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Editor.Engine
 {
-    class Terrain : ISelectable, IMaterial
+    class Terrain : ISelectable, IRenderable
     {
         public VertexPositionNormalTexture[] Vertices { get; set; } // Vertex array
         public VertexBuffer VertexBuffer { get; set; } // Vertex Buffer
@@ -23,6 +23,9 @@ namespace Editor.Engine
         public Material Material { get; private set; }
         public bool Selected { get; set; } = false;
 
+        public Vector3 Position { get; set; } = Vector3.Zero;
+        public Vector3 Rotation { get; set; } = Vector3.Zero;
+        public float Scale { get; set; } = 1;
         public Terrain(Effect _effect, Texture2D _heightMap, Texture2D _baseTexture, int _height, GraphicsDevice _device)
         {
             Material = new Material();
@@ -163,18 +166,15 @@ namespace Editor.Engine
             }
         }
 
-        public void Render(Camera _camera)
+        public Matrix GetTransform()
         {
-            Material.Effect.Parameters["World"]?.SetValue(Matrix.Identity);
-            Material.Effect.Parameters["WorldViewProjection"]?.SetValue(Matrix.Identity * _camera.View * _camera.Projection);
-            Material.Effect.Parameters["CameraPosition"]?.SetValue(_camera.Position);
-            Material.Effect.Parameters["View"]?.SetValue(_camera.View);
-            Material.Effect.Parameters["Projection"]?.SetValue(_camera.Projection);
-            Material.Effect.Parameters["TextureTiling"]?.SetValue(15.0f);
-            Material.Effect.Parameters["LightDirection"]?.SetValue(LightDirection);
-            Material.Effect.Parameters["Texture"]?.SetValue(Material.Diffuse);
-            Material.Effect.Parameters["Tint"]?.SetValue(Selected);
+            return Matrix.CreateScale(Scale) *
+                   Matrix.CreateFromYawPitchRoll(Rotation.Y, Rotation.X, Rotation.Z) *
+                   Matrix.CreateTranslation(Position);
+        }
 
+        public void Render()
+        {
             Device.SetVertexBuffer(VertexBuffer);
             Device.Indices = IndexBuffer;
 

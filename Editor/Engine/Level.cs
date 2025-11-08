@@ -16,6 +16,8 @@ namespace Editor.Engine
         // Members
         private List<Models> m_models = new();
         private Camera m_camera = new(new Vector3(0, 400, 500), 16 / 9);
+        private Light m_light = new() { Position = new(0, 400, -500), 
+                                        Color = new(0.9f, 0.9f, 0.9f) };
         private Terrain m_terrain = null;
 
         public Level()
@@ -192,13 +194,16 @@ namespace Editor.Engine
 
         public void Render()
         {
+            Renderer r = Renderer.Instance;
+            r.Camera = m_camera;
+            r.Light = m_light;
             foreach (Models m in m_models)
             {
-                m.Render(m_camera);
+                r.Render(m);
             }
             if (m_terrain != null)
             {
-                m_terrain.Render(m_camera);
+                r.Render(m_terrain);
             }
         }
 

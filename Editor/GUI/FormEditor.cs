@@ -10,6 +10,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using Microsoft.Xna.Framework.Audio;
+using System.Collections.Generic;
 
 namespace Editor
 {
@@ -68,6 +69,28 @@ namespace Editor
             gameForm.DragDrop += GameForm_DragDrop;
             gameForm.DragOver += GameForm_DragOver;
             gameForm.AllowDrop = true;
+        }
+
+        private void UpdateModelsList()
+        {
+            listBoxLevel.Items.Clear();
+            List<Models> models = Game.Project.CurrentLevel?.GetModelsList();
+            foreach (Models model in models)
+            {
+                listBoxLevel.Items.Add(new ListItemLevel() { Model = model });
+            }
+        }
+
+        private void UpdatePrefabsList()
+        {
+            listBoxPrefabs.Items.Clear();
+            string[] prefabs = Directory.GetFiles(Game.Project.Folder, "*.prefab");
+            foreach (string prefab in prefabs)
+            {
+                string fileName = Path.GetFileName(prefab);
+                ListItemPrefab item = new() { Name = fileName };
+                listBoxPrefabs.Items.Add(item);
+            }
         }
 
         private void GameForm_DragOver(object sender, DragEventArgs e)
@@ -238,6 +261,8 @@ namespace Editor
                 Game.Project = new(Game, sfd.FileName);
                 Game.Project.OnAssetUpdated += Project_OnAssetUpdated;
                 Game.Project.AssetMonitor.UpdateAssetDB();
+                UpdatePrefabsList();
+                UpdateModelsList();
                 Text = "Our Cool Editor - " + Game.Project.Name;
                 Game.AdjustAspectRatio();
             }
@@ -297,6 +322,10 @@ namespace Editor
                 using var reader = new BinaryReader(stream, Encoding.UTF8, false);
                 Game.Project = new();
                 Game.Project.Deserialize(reader, Game);
+                Game.Project.OnAssetUpdated += Project_OnAssetUpdated;
+                Game.Project.AssetMonitor.UpdateAssetDB();
+                UpdatePrefabsList();
+                UpdateModelsList();
                 Text = "Our Cool Editor - " + Game.Project.Name;
                 Game.AdjustAspectRatio();
             }

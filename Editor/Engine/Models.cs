@@ -1,10 +1,9 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
+﻿using Editor.Editor;
 using Editor.Engine.Interfaces;
-using System.IO;
-using Editor.Editor;
-using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.IO;
 
 namespace Editor.Engine
 {
@@ -58,6 +57,7 @@ namespace Editor.Engine
                             Vector3 _position,
                             float _scale)
         {
+            string fileName = Path.Combine(_game.Project.Folder, _game.Project.ContentFolder, _game.Project.AssetFolder, _model);
             Mesh = _game.Content.Load<Model>(_model);
             Mesh.Tag = _model;
             Name = _model;
@@ -77,6 +77,7 @@ namespace Editor.Engine
             }
             else
             {
+                string fileName = Path.Combine(_game.Project.Folder, _game.Project.ContentFolder, _game.Project.AssetFolder, _texture);
                 Material.Diffuse = _game.Content.Load<Texture>(_texture);
             }
             Material.Diffuse.Tag = _texture;
@@ -102,6 +103,7 @@ namespace Editor.Engine
             }
             else
             {
+                string fileName = Path.Combine(_game.Project.Folder, _game.Project.ContentFolder, _game.Project.AssetFolder, _effect);
                 Material.Effect = _game.Content.Load<Effect>(_effect);
             }
             Material.Effect.Tag = _effect;

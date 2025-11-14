@@ -42,6 +42,11 @@ namespace Editor.Engine
             }
         }
 
+        public List<Models> GetModelsList()
+        {
+            return m_models;
+        }
+
         public void AddModel(Models _model)
         {
             m_models.Add(_model);

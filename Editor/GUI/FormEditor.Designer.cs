@@ -47,6 +47,7 @@
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             propertyGrid = new System.Windows.Forms.PropertyGrid();
             listBoxAssets = new System.Windows.Forms.ListBox();
+            createPrefabToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
@@ -119,7 +120,7 @@
             // 
             // assetsToolStripMenuItem
             // 
-            assetsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { importToolStripMenuItem });
+            assetsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { importToolStripMenuItem, createPrefabToolStripMenuItem });
             assetsToolStripMenuItem.Name = "assetsToolStripMenuItem";
             assetsToolStripMenuItem.Size = new System.Drawing.Size(52, 20);
             assetsToolStripMenuItem.Text = "Assets";
@@ -127,7 +128,7 @@
             // importToolStripMenuItem
             // 
             importToolStripMenuItem.Name = "importToolStripMenuItem";
-            importToolStripMenuItem.Size = new System.Drawing.Size(110, 22);
+            importToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             importToolStripMenuItem.Text = "Import";
             importToolStripMenuItem.Click += importToolStripMenuItem_Click;
             // 
@@ -253,6 +254,13 @@
             listBoxAssets.Size = new System.Drawing.Size(234, 197);
             listBoxAssets.TabIndex = 0;
             // 
+            // createPrefabToolStripMenuItem
+            // 
+            createPrefabToolStripMenuItem.Name = "createPrefabToolStripMenuItem";
+            createPrefabToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            createPrefabToolStripMenuItem.Text = "Create Prefab";
+            createPrefabToolStripMenuItem.Click += createPrefabToolStripMenuItem_Click;
+            // 
             // FormEditor
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -309,5 +317,6 @@
         private System.Windows.Forms.SplitContainer splitContainer3;
         public System.Windows.Forms.ListBox listBoxLevel;
         private System.Windows.Forms.ListBox listBoxPrefabs;
+        private System.Windows.Forms.ToolStripMenuItem createPrefabToolStripMenuItem;
     }
 }

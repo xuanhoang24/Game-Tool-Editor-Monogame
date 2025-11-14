@@ -26,6 +26,17 @@ namespace Editor
             KeyPreview = true;
             toolStripStatusLabel.Text = Directory.GetCurrentDirectory();
             listBoxAssets.MouseDown += ListBoxAssets_MouseDown;
+            listBoxPrefabs.MouseDown += ListBoxPrefabs_MouseDown;
+        }
+
+        private void ListBoxPrefabs_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (listBoxPrefabs.Items.Count == 0) return;
+
+            int index = listBoxPrefabs.IndexFromPoint(e.X, e.Y);
+            if (index < 0) return;
+            var lip = listBoxPrefabs.Items[index] as ListItemPrefab;
+            DoDragDrop(lip, DragDropEffects.Copy);
         }
 
         private void ListBoxAssets_MouseDown(object sender, MouseEventArgs e)
@@ -88,6 +99,10 @@ namespace Editor
                     e.Effect = DragDropEffects.Copy;
                 }
             }
+            else if (e.Data.GetDataPresent(typeof(ListItemPrefab)))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
         }
 
         private void GameForm_DragDrop(object sender, DragEventArgs e)
@@ -129,6 +144,17 @@ namespace Editor
                     }
                     menuStrip.Show(new System.Drawing.Point(e.X, e.Y));
                 }
+            }
+            else if (e.Data.GetDataPresent(typeof(ListItemPrefab)))
+            {
+                var lip = e.Data.GetData(typeof(ListItemPrefab)) as ListItemPrefab;
+                string fileName = Path.Combine(Game.Project.Folder, lip.Name);
+                using var stream = File.Open(fileName, FileMode.Open);
+                using var reader = new BinaryReader(stream,Encoding.UTF8, false);
+                Models m = new Models();
+                m.Deserialize(reader, m_game);
+                m_game.Project.CurrentLevel?.AddModel(m);
+                listBoxLevel.Items.Add(new ListItemLevel() { Model = m });
             }
         }
 

@@ -37,6 +37,7 @@
             exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             assetsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             importToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            createPrefabToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             statusStrip1 = new System.Windows.Forms.StatusStrip();
             toolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             splitContainer = new System.Windows.Forms.SplitContainer();
@@ -47,7 +48,6 @@
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             propertyGrid = new System.Windows.Forms.PropertyGrid();
             listBoxAssets = new System.Windows.Forms.ListBox();
-            createPrefabToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
@@ -128,9 +128,16 @@
             // importToolStripMenuItem
             // 
             importToolStripMenuItem.Name = "importToolStripMenuItem";
-            importToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            importToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
             importToolStripMenuItem.Text = "Import";
             importToolStripMenuItem.Click += importToolStripMenuItem_Click;
+            // 
+            // createPrefabToolStripMenuItem
+            // 
+            createPrefabToolStripMenuItem.Name = "createPrefabToolStripMenuItem";
+            createPrefabToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
+            createPrefabToolStripMenuItem.Text = "Create Prefab";
+            createPrefabToolStripMenuItem.Click += createPrefabToolStripMenuItem_Click;
             // 
             // statusStrip1
             // 
@@ -146,7 +153,6 @@
             toolStripStatusLabel.Name = "toolStripStatusLabel";
             toolStripStatusLabel.Size = new System.Drawing.Size(54, 17);
             toolStripStatusLabel.Text = "ToolStrip";
-            toolStripStatusLabel.Click += toolStripStatusLabel1_Click;
             // 
             // splitContainer
             // 
@@ -253,13 +259,6 @@
             listBoxAssets.Name = "listBoxAssets";
             listBoxAssets.Size = new System.Drawing.Size(234, 197);
             listBoxAssets.TabIndex = 0;
-            // 
-            // createPrefabToolStripMenuItem
-            // 
-            createPrefabToolStripMenuItem.Name = "createPrefabToolStripMenuItem";
-            createPrefabToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            createPrefabToolStripMenuItem.Text = "Create Prefab";
-            createPrefabToolStripMenuItem.Click += createPrefabToolStripMenuItem_Click;
             // 
             // FormEditor
             // 

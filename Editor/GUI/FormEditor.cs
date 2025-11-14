@@ -30,16 +30,6 @@ namespace Editor
             listBoxPrefabs.MouseDown += ListBoxPrefabs_MouseDown;
         }
 
-        private void ListBoxPrefabs_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (listBoxPrefabs.Items.Count == 0) return;
-
-            int index = listBoxPrefabs.IndexFromPoint(e.X, e.Y);
-            if (index < 0) return;
-            var lip = listBoxPrefabs.Items[index] as ListItemPrefab;
-            DoDragDrop(lip, DragDropEffects.Copy);
-        }
-
         private void ListBoxAssets_MouseDown(object sender, MouseEventArgs e)
         {
             if (listBoxAssets.Items.Count == 0) return;
@@ -54,6 +44,16 @@ namespace Editor
             {
                 DoDragDrop(lia, DragDropEffects.Copy);
             }
+        }
+
+        private void ListBoxPrefabs_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (listBoxPrefabs.Items.Count == 0) return;
+
+            int index = listBoxPrefabs.IndexFromPoint(e.X, e.Y);
+            if (index < 0) return;
+            var lip = listBoxPrefabs.Items[index] as ListItemPrefab;
+            DoDragDrop(lip, DragDropEffects.Copy);
         }
 
         private void HookEvent()
@@ -71,61 +71,41 @@ namespace Editor
             gameForm.AllowDrop = true;
         }
 
-        private void UpdateModelsList()
+        private void GameForm_MouseDown(object sender, MouseEventArgs e)
         {
-            listBoxLevel.Items.Clear();
-            List<Models> models = Game.Project.CurrentLevel?.GetModelsList();
-            foreach (Models model in models)
-            {
-                listBoxLevel.Items.Add(new ListItemLevel() { Model = model });
-            }
+            InputController.Instance.SetButtonDown(e.Button);
+            var p = new Vector2(e.Location.X, e.Location.Y);
+            InputController.Instance.DragStart = p;
         }
 
-        private void UpdatePrefabsList()
+        private void GameForm_MouseUp(object sender, MouseEventArgs e)
         {
-            listBoxPrefabs.Items.Clear();
-            string[] prefabs = Directory.GetFiles(Game.Project.Folder, "*.prefab");
-            foreach (string prefab in prefabs)
-            {
-                string fileName = Path.GetFileName(prefab);
-                ListItemPrefab item = new() { Name = fileName };
-                listBoxPrefabs.Items.Add(item);
-            }
+            InputController.Instance.SetButtonUp(e.Button);
+            var p = new Vector2(e.Location.X, e.Location.Y);
+            InputController.Instance.DragEnd = p;
         }
 
-        private void GameForm_DragOver(object sender, DragEventArgs e)
+        private void GameForm_MouseWheel(object sender, MouseEventArgs e)
         {
-            m_dropped = null;
-            Form gameForm = Control.FromHandle(m_game.Window.Handle) as Form;
-            var p = gameForm.PointToClient(new System.Drawing.Point(e.X, e.Y));
-            InputController.Instance.MousePosition = new Vector2(p.X, p.Y);
-            e.Effect = DragDropEffects.None;
-            if (e.Data.GetDataPresent(typeof(ListItemAsset)))
-            {
-                var lia = e.Data.GetData(typeof(ListItemAsset)) as ListItemAsset;
-                ISelectable obj = m_game.Project.CurrentLevel.HandlePick(false);
-                if (lia.Type == AssetTypes.MODEL)
-                {
-                    e.Effect = DragDropEffects.Copy;
-                }
-                else if ((lia.Type == AssetTypes.TEXTURE) ||
-                         (lia.Type == AssetTypes.EFFECT))
-                {
-                    if (obj is IMaterial) m_dropped = obj as IMaterial;
-                }
-                else if (lia.Type == AssetTypes.SFX)
-                {
-                    if (obj is ISoundEmitter) m_dropped = obj as ISoundEmitter;
-                }
-                if (m_dropped != null)
-                {
-                    e.Effect = DragDropEffects.Copy;
-                }
-            }
-            else if (e.Data.GetDataPresent(typeof(ListItemPrefab)))
-            {
-                e.Effect = DragDropEffects.Copy;
-            }
+            InputController.Instance.Setwheel(e.Delta / SystemInformation.MouseWheelScrollDelta);
+        }
+
+        private void GameForm_MouseMove(object sender, MouseEventArgs e)
+        {
+            var p = new Vector2(e.Location.X, e.Location.Y);
+            InputController.Instance.MousePosition = p;
+        }
+
+        private void GameForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            InputController.Instance.SetKeyDown(e.KeyCode);
+            e.Handled = true;
+        }
+
+        private void GameForm_KeyUp(object sender, KeyEventArgs e)
+        {
+            InputController.Instance.SetKeyUp(e.KeyCode);
+            e.Handled = true;
         }
 
         private void GameForm_DragDrop(object sender, DragEventArgs e)
@@ -173,11 +153,46 @@ namespace Editor
                 var lip = e.Data.GetData(typeof(ListItemPrefab)) as ListItemPrefab;
                 string fileName = Path.Combine(Game.Project.Folder, lip.Name);
                 using var stream = File.Open(fileName, FileMode.Open);
-                using var reader = new BinaryReader(stream,Encoding.UTF8, false);
+                using var reader = new BinaryReader(stream, Encoding.UTF8, false);
                 Models m = new Models();
                 m.Deserialize(reader, m_game);
                 m_game.Project.CurrentLevel?.AddModel(m);
                 listBoxLevel.Items.Add(new ListItemLevel() { Model = m });
+            }
+        }
+
+        private void GameForm_DragOver(object sender, DragEventArgs e)
+        {
+            m_dropped = null;
+            Form gameForm = Control.FromHandle(m_game.Window.Handle) as Form;
+            var p = gameForm.PointToClient(new System.Drawing.Point(e.X, e.Y));
+            InputController.Instance.MousePosition = new Vector2(p.X, p.Y);
+            e.Effect = DragDropEffects.None;
+            if (e.Data.GetDataPresent(typeof(ListItemAsset)))
+            {
+                var lia = e.Data.GetData(typeof(ListItemAsset)) as ListItemAsset;
+                ISelectable obj = m_game.Project.CurrentLevel.HandlePick(false);
+                if (lia.Type == AssetTypes.MODEL)
+                {
+                    e.Effect = DragDropEffects.Copy;
+                }
+                else if ((lia.Type == AssetTypes.TEXTURE) ||
+                         (lia.Type == AssetTypes.EFFECT))
+                {
+                    if (obj is IMaterial) m_dropped = obj as IMaterial;
+                }
+                else if (lia.Type == AssetTypes.SFX)
+                {
+                    if (obj is ISoundEmitter) m_dropped = obj as ISoundEmitter;
+                }
+                if (m_dropped != null)
+                {
+                    e.Effect = DragDropEffects.Copy;
+                }
+            }
+            else if (e.Data.GetDataPresent(typeof(ListItemPrefab)))
+            {
+                e.Effect = DragDropEffects.Copy;
             }
         }
 
@@ -194,46 +209,26 @@ namespace Editor
             emitter.SoundEffects[index] = SFXInstance.Create(m_game, lia.Name);
         }
 
-        private void GameForm_MouseMove(object sender, MouseEventArgs e)
+        private void UpdateModelsList()
         {
-            var p = new Vector2(e.Location.X, e.Location.Y);
-            InputController.Instance.MousePosition = p;
+            listBoxLevel.Items.Clear();
+            List<Models> models = Game.Project.CurrentLevel?.GetModelsList();
+            foreach (Models model in models)
+            {
+                listBoxLevel.Items.Add(new ListItemLevel() { Model = model });
+            }
         }
 
-        private void GameForm_MouseWheel(object sender, MouseEventArgs e)
+        private void UpdatePrefabsList()
         {
-            InputController.Instance.Setwheel(e.Delta / SystemInformation.MouseWheelScrollDelta);
-        }
-
-        private void GameForm_KeyUp(object sender, KeyEventArgs e)
-        {
-            InputController.Instance.SetKeyUp(e.KeyCode);
-            e.Handled = true;
-        }
-
-        private void GameForm_KeyDown(object sender, KeyEventArgs e)
-        {
-            InputController.Instance.SetKeyDown(e.KeyCode);
-            e.Handled = true;
-        }
-
-        private void GameForm_MouseUp(object sender, MouseEventArgs e)
-        {
-            InputController.Instance.SetButtonUp(e.Button);
-            var p = new Vector2(e.Location.X, e.Location.Y);
-            InputController.Instance.DragEnd = p;
-        }
-
-        private void GameForm_MouseDown(object sender, MouseEventArgs e)
-        {
-            InputController.Instance.SetButtonDown(e.Button);
-            var p = new Vector2(e.Location.X, e.Location.Y);
-            InputController.Instance.DragStart = p;
-        }
-
-        private void toolStripStatusLabel1_Click(object sender, EventArgs e)
-        {
-
+            listBoxPrefabs.Items.Clear();
+            string[] prefabs = Directory.GetFiles(Game.Project.Folder, "*.prefab");
+            foreach (string prefab in prefabs)
+            {
+                string fileName = Path.GetFileName(prefab);
+                ListItemPrefab item = new() { Name = fileName };
+                listBoxPrefabs.Items.Add(item);
+            }
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -386,6 +381,5 @@ namespace Editor
             ListItemPrefab item = new() { Name = m.Name + ".prefab" };
             listBoxPrefabs.Items.Add(item);
         }
-
     }
 }

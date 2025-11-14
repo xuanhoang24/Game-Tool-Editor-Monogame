@@ -15,8 +15,10 @@ namespace Editor.Engine
         public SoundEffectInstance Instance { get; set; }
         public static SFXInstance Create(GameEditor _game, string _assetName)
         {
-            string fileName = Path.Combine(_game.Project.Folder, _game.Project.ContentFolder, _game.Project.AssetFolder, _assetName);
-            SoundEffect ef = _game.Content.Load<SoundEffect>(fileName);
+            /*string fileName = Path.Combine(_game.Project.Folder, _game.Project.ContentFolder, _game.Project.AssetFolder, _assetName);
+            SoundEffect ef = _game.Content.Load<SoundEffect>(fileName);*/
+            SoundEffect ef = _game.Content.Load<SoundEffect>(_assetName);
+
             SoundEffectInstance efi = ef.CreateInstance();
             efi.Volume = 1;
             efi.IsLooped = false;

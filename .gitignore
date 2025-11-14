@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 *.oce
 /Editor/Content/Fighter.prefab
+/Editor/Content/test.oce

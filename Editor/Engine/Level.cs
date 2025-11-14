@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using Microsoft.Xna.Framework.Graphics;
 using Editor.Editor;
+using Microsoft.Xna.Framework.Audio;
 
 namespace Editor.Engine
 {
@@ -196,12 +197,28 @@ namespace Editor.Engine
             return null;
         }
 
+        private void HandleAudio()
+        {
+            foreach(Models m in m_models)
+            {
+                if((Models.SelectedDirty && m.Selected))
+                {
+                    var sfi = m.SoundEffects[(int)SoundEffectTypes.OnSelect];
+                    if(sfi?.State == SoundState.Stopped)
+                    {
+                        sfi.Play();
+                    }
+                }
+            }
+        }
+
         public void Update(float _delta)
         {
             HandleTranslate();
             HandleRotate(_delta);
             HandleScale(_delta);
             HandlePick();
+            HandleAudio();
         }
 
         public void Render()

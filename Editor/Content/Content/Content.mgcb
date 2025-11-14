@@ -13,6 +13,12 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin BulletImpact21.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:BulletImpact21.wav
+
 #begin DefaultGrass.jpg
 /importer:TextureImporter
 /processor:TextureProcessor

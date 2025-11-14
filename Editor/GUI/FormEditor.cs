@@ -58,7 +58,10 @@ namespace Editor
 
         private void GameForm_DragOver(object sender, DragEventArgs e)
         {
-            InputController.Instance.MousePosition = new Vector2(e.X, e.Y);
+            m_dropped = null;
+            Form gameForm = Control.FromHandle(m_game.Window.Handle) as Form;
+            var p = gameForm.PointToClient(new System.Drawing.Point(e.X, e.Y));
+            InputController.Instance.MousePosition = new Vector2(p.X, p.Y);
             e.Effect = DragDropEffects.None;
             if (e.Data.GetDataPresent(typeof(ListItemAsset)))
             {
@@ -90,6 +93,7 @@ namespace Editor
                     Models model = new(m_game, lia.Name, "DefaultTexture", "DefaultEffect",
                                         Vector3.Zero, 1.0f);
                     m_game.Project.CurrentLevel.AddModel(model);
+                    listBoxLevel.Items.Add(new ListItemLevel() { Model = model });
                 }
                 else if (lia.Type == AssetTypes.TEXTURE)
                 {
@@ -248,6 +252,16 @@ namespace Editor
         {
             if(m_MGCBProcess != null) return;
             m_MGCBProcess.Kill();
+        }
+
+        private void listBoxLevel_SelecetedIndexChange(object sender, EventArgs e)
+        {
+            if(listBoxLevel.Items.Count == 0) return;
+            Game.Project.CurrentLevel.ClearSelectedModels();
+            int index = listBoxLevel.SelectedIndex;
+            if (index == -1) return;
+            var lia = listBoxLevel.Items[index] as ListItemLevel;
+            lia.Model.Selected = true;
         }
     }
 }

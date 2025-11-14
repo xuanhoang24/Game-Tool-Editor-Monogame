@@ -27,6 +27,7 @@ namespace Editor.Engine
                 }
             }
         }
+        public string Name { get; set; }
         public static bool SelectedDirty { get; set; } = false;
 
         // Members
@@ -57,6 +58,7 @@ namespace Editor.Engine
         {
             Mesh = _game.Content.Load<Model>(_model);
             Mesh.Tag = _model;
+            Name = _model;
             Material = new Material();
             SetTexture(_game, _texture);
             SetShader(_game, _effect);

@@ -46,13 +46,13 @@ namespace Editor.Editor
                 File.Copy($"ContentTemplate.mgcb", ContentFolder + $"{d}Content.mgcb");
             }
             AssetMonitor = new(ObjectFolder);
-            AssetMonitor.OnAssetUpdated += AssetMon_OnAssetsUpdated;
+            AssetMonitor.OnAssetUpdated += AssetMonitor_OnAssetsUpdated;
            
             // Add a default level
             AddLevel(_game);
         }
 
-        private void AssetMon_OnAssetsUpdated()
+        private void AssetMonitor_OnAssetsUpdated()
         {
             OnAssetUpdated?.Invoke();
         }
@@ -99,6 +99,8 @@ namespace Editor.Editor
             ContentFolder = _stream.ReadString();
             AssetFolder = _stream.ReadString();
             ObjectFolder = _stream.ReadString();
+
+            _game.Content.RootDirectory = AssetFolder;
             int levelCount = _stream.ReadInt32();
             for (int count = 0; count < levelCount; count++)
             {
@@ -108,13 +110,8 @@ namespace Editor.Editor
             }
             int clIndex = _stream.ReadInt32();
             CurrentLevel = Levels[clIndex];
-            AssetFolder = new(ObjectFolder);
-            AssetMonitor.OnAssetUpdated += AssetMonitor_OnAssetUpdated;
-        }
-
-        private void AssetMonitor_OnAssetUpdated()
-        {
-            throw new System.NotImplementedException();
+            AssetMonitor = new(ObjectFolder);
+            AssetMonitor.OnAssetUpdated += AssetMonitor_OnAssetsUpdated;
         }
     }
 }

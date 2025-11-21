@@ -1,7 +1,5 @@
 ﻿using Editor.Engine;
 using Editor.Engine.Interfaces;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
 using Editor.Engine.Scripting;
 using System.Collections.Generic;
 using System.IO;
@@ -21,6 +19,7 @@ namespace Editor.Editor
         public string ScriptFolder { get; private set; } = string.Empty;
         public string Name { get; private set; } = string.Empty;
         public AssetMonitor AssetMonitor { get; private set; } = null;
+        public ScriptMonitor ScriptMonitor { get; private set; } = null;
 
         public Project()
         {
@@ -39,7 +38,7 @@ namespace Editor.Editor
             ContentFolder = Path.Combine(Folder, "Content");
             AssetFolder = Path.Combine(ContentFolder, "bin");
             ObjectFolder = Path.Combine(ContentFolder, "obj");
-            ScriptFolder = Path.Combine(Folder, "Scirpts");
+            ScriptFolder = Path.Combine(Folder, "Scripts");
 
             char d = Path.DirectorySeparatorChar;
             if (!Directory.Exists(ContentFolder))
@@ -61,10 +60,17 @@ namespace Editor.Editor
 
             AssetMonitor = new(ObjectFolder);
             AssetMonitor.OnAssetUpdated += AssetMonitor_OnAssetsUpdated;
+            ScriptMonitor = new(ScriptFolder);
+            ScriptMonitor.OnScriptUpdated += ScriptMonitor_OnScriptUpdated;
            
             // Add a default level
             AddLevel(_game);
             ConfigureScripts();
+        }
+
+        private void ScriptMonitor_OnScriptUpdated(string _script)
+        {
+            ScriptController.Instance.LoadScriptFile(_script);
         }
 
         private void AssetMonitor_OnAssetsUpdated()

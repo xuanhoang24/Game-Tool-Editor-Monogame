@@ -110,7 +110,7 @@ namespace Editor.Editor
 
             if (Project != null)
             {
-                ScriptController.Instance.Execute("BeforeUpdateMain");
+                ScriptController.Instance.Execute("BeforeRenderMain");
                 GraphicsDevice.RasterizerState = m_rasterState;
                 GraphicsDevice.DepthStencilState = m_depthStencilState;
 
@@ -119,7 +119,7 @@ namespace Editor.Editor
                 m_fonts.Draw(m_spriteBatch, 20, InputController.Instance.ToString(), new Vector2(20, 20), Color.White);
                 m_fonts.Draw(m_spriteBatch, 16, Project.CurrentLevel.ToString(), new Vector2(20, 80), Color.Yellow);
                 m_spriteBatch.End();
-                ScriptController.Instance.Execute("BeforeUpdateMain");
+                ScriptController.Instance.Execute("AfterRenderMain");
             }
 
             base.Draw(gameTime);

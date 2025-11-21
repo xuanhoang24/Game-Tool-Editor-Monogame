@@ -39,7 +39,9 @@ namespace Editor.Engine.Scripting
 
         public void LoadScriptFile(string _file)
         {
-            string script = File.ReadAllText(_file);
+            using var inStream = new FileStream(_file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var streamReader = new StreamReader(inStream);
+            string script = streamReader.ReadToEnd();
             LoadScript(script);
         }
 

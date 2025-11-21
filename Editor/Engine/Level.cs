@@ -13,6 +13,8 @@ namespace Editor.Engine
     {
         // Accessors
         public Camera GetCamera() { return m_camera; }
+        public Terrain GetTerrain() { return m_terrain; }
+        public Light GetLight() { return m_light; }
 
         // Members
         private List<Models> m_models = new();
@@ -27,7 +29,10 @@ namespace Editor.Engine
 
         public void LoadContent(GameEditor _game)
         {
-            //m_terrain = new(_game.DefaultEffect, _game.DefaultHeightMap, _game.DefaultGrass, 200, _game.GraphicsDevice);
+            m_terrain = new(_game.DefaultEffect, 
+                        _game.DefaultHeightMap, 
+                        _game.DefaultGrass, 200, 
+                        _game.GraphicsDevice);
         }
 
         public void ClearSelectedModels()

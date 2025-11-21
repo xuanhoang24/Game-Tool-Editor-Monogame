@@ -2,6 +2,7 @@
 using Editor.Engine.Interfaces;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Editor.Engine.Scripting;
 using System.Collections.Generic;
 using System.IO;
 
@@ -17,6 +18,7 @@ namespace Editor.Editor
         public string ContentFolder { get; private set; } = string.Empty;
         public string AssetFolder { get; private set; } = string.Empty;
         public string ObjectFolder { get; private set; } = string.Empty;
+        public string ScriptFolder { get; private set; } = string.Empty;
         public string Name { get; private set; } = string.Empty;
         public AssetMonitor AssetMonitor { get; private set; } = null;
 
@@ -37,6 +39,8 @@ namespace Editor.Editor
             ContentFolder = Path.Combine(Folder, "Content");
             AssetFolder = Path.Combine(ContentFolder, "bin");
             ObjectFolder = Path.Combine(ContentFolder, "obj");
+            ScriptFolder = Path.Combine(Folder, "Scirpts");
+
             char d = Path.DirectorySeparatorChar;
             if (!Directory.Exists(ContentFolder))
             {
@@ -45,11 +49,22 @@ namespace Editor.Editor
                 Directory.CreateDirectory(ObjectFolder);
                 File.Copy($"ContentTemplate.mgcb", ContentFolder + $"{d}Content.mgcb");
             }
+            if(!Directory.Exists(ScriptFolder))
+            {
+                Directory.CreateDirectory(ScriptFolder);
+            }
+            CreateScriptFile(ScriptFolder + $"{d}BeforeRender.lua");
+            CreateScriptFile(ScriptFolder + $"{d}AfterRender.lua");
+            CreateScriptFile(ScriptFolder + $"{d}BeforeUpdate.lua");
+            CreateScriptFile(ScriptFolder + $"{d}AfterUpdate.lua");
+
+
             AssetMonitor = new(ObjectFolder);
             AssetMonitor.OnAssetUpdated += AssetMonitor_OnAssetsUpdated;
            
             // Add a default level
             AddLevel(_game);
+            ConfigureScripts();
         }
 
         private void AssetMonitor_OnAssetsUpdated()
@@ -74,6 +89,27 @@ namespace Editor.Editor
             CurrentLevel.Render();
         }
 
+        private void CreateScriptFile(string _file)
+        {
+            string funcName = Path.GetFileNameWithoutExtension(_file);
+            if(!File.Exists(_file))
+            {
+                File.Create(_file).Close();
+                File.AppendAllLines(_file, new string[] { "function " + funcName + "Main()", "end" });
+            }
+        }
+
+        public void ConfigureScripts()
+        {
+            char d = Path.DirectorySeparatorChar;
+            var sc = ScriptController.Instance;
+            sc.LoadSharedObjects(this);
+            sc.LoadScriptFile(ScriptFolder + $"{d}BeforeRender.lua");
+            sc.LoadScriptFile(ScriptFolder + $"{d}AfterRender.lua");
+            sc.LoadScriptFile(ScriptFolder + $"{d}BeforeUpdate.lua");
+            sc.LoadScriptFile(ScriptFolder + $"{d}AfterUpdate.lua");
+        }
+
         public void Serialize(BinaryWriter _stream)
         {
             _stream.Write(Folder);
@@ -81,6 +117,7 @@ namespace Editor.Editor
             _stream.Write(ContentFolder);
             _stream.Write(AssetFolder);
             _stream.Write(ObjectFolder);
+            _stream.Write(ScriptFolder);
             _stream.Write(Levels.Count);
             int clIndex = Levels.IndexOf(CurrentLevel);
             foreach (var level in Levels)
@@ -99,7 +136,7 @@ namespace Editor.Editor
             ContentFolder = _stream.ReadString();
             AssetFolder = _stream.ReadString();
             ObjectFolder = _stream.ReadString();
-
+            ScriptFolder = _stream.ReadString();
             _game.Content.RootDirectory = AssetFolder;
             int levelCount = _stream.ReadInt32();
             for (int count = 0; count < levelCount; count++)
@@ -112,6 +149,7 @@ namespace Editor.Editor
             CurrentLevel = Levels[clIndex];
             AssetMonitor = new(ObjectFolder);
             AssetMonitor.OnAssetUpdated += AssetMonitor_OnAssetsUpdated;
+            ConfigureScripts();
         }
     }
 }

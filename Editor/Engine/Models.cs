@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Editor.Engine.Interfaces;
 using System.IO;
+using System;
 
 namespace Editor.Engine
 {
@@ -10,18 +11,24 @@ namespace Editor.Engine
     {
         // Accessors
         public Model Mesh { get; set; }
-        public Texture Texture { get; set; }
         public Effect Shader { get; set; }
+        public Texture Texture { get; set; }
+
         public Vector3 Position { get => m_position; set { m_position = value; } }
         public Vector3 Rotation { get => m_rotation; set { m_rotation = value; } }
-        public float Scale { get; set; }
-        public bool Selected { get; set; } = false;
+        public Vector3 RotationSpeed { get; set; } = Vector3.Zero;
 
-        // Texturing
+        public float Scale { get; set; }
 
         // Members
         private Vector3 m_position;
         private Vector3 m_rotation;
+
+        // Orbit
+        public Models OrbitParent { get; set; }
+        public float OrbitSpeed { get; set; }
+        public float OrbitAngle { get; set; }
+        public float OrbitRadius { get; set; }
 
         public Models()
         {
@@ -67,25 +74,6 @@ namespace Editor.Engine
             }
         }
 
-        public void Translate(Vector3 _translate, Camera _camera)
-        {
-            float distance = Vector3.Distance(_camera.Target, _camera.Position);
-            Vector3 foward = _camera.Target - _camera.Position;
-            foward.Normalize();
-            Vector3 left = Vector3.Cross(foward, Vector3.Up);
-            left.Normalize();
-            Vector3 up = Vector3.Cross(left, foward);
-            up.Normalize();
-            Position += left * _translate.X * distance;
-            Position += up * _translate.Y * distance;
-            Position += foward * _translate.Z * 100f;
-        }
-
-        public void Rotate(Vector3 _rotate)
-        {
-            Rotation += _rotate;
-        }
-
         public Matrix GetTransform()
         {
             return Matrix.CreateScale(Scale) *
@@ -93,12 +81,29 @@ namespace Editor.Engine
                    Matrix.CreateTranslation(Position);
         }
 
+        public void SetRotationSpeed(float x, float y, float z)
+        {
+            RotationSpeed = new Vector3(x, y, z);
+        }
+
         public void Render(Matrix _view, Matrix _projection)
         {
+            m_rotation += RotationSpeed;
+
+            if (OrbitParent != null)
+            {
+                OrbitAngle += OrbitSpeed;
+
+                Position = new Vector3( // parametric equations of a circle
+                    (float)(Math.Cos(OrbitAngle) * OrbitRadius) + OrbitParent.Position.X,
+                    Position.Y,
+                    (float)(Math.Sin(OrbitAngle) * OrbitRadius) + OrbitParent.Position.Z
+                );
+            }
+
             Shader.Parameters["World"].SetValue(GetTransform());
             Shader.Parameters["WorldViewProjection"].SetValue(GetTransform() * _view * _projection);
             Shader.Parameters["Texture"].SetValue(Texture);
-            Shader.Parameters["Tint"].SetValue(Selected);
 
             foreach (ModelMesh mesh in Mesh.Meshes)
             {

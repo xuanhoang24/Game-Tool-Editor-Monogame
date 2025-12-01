@@ -8,10 +8,10 @@ namespace Editor.Editor
 {
     internal class Project : ISerializable
     {
-        public Level CurrentLevel { get; private set; } = null;
-        public List<Level> Levels { get; private set; } = new();
-        public string Folder { get; private set; } = string.Empty;
-        public string Name { get; private set; } = string.Empty;
+        public Level CurrentLevel { get; set; } = null;
+        public List<Level> Levels { get; set; } = new();
+        public string Folder { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
 
         public Project()
         {
@@ -35,11 +35,6 @@ namespace Editor.Editor
             CurrentLevel = new();
             CurrentLevel.LoadContent(_content);
             Levels.Add(CurrentLevel);
-        }
-
-        public void Update(float _delta)
-        {
-            CurrentLevel?.Update(_delta);
         }
 
         public void Render()

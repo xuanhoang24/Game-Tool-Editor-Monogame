@@ -28,6 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
+            statusStrip1 = new System.Windows.Forms.StatusStrip();
+            toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             menuStrip1 = new System.Windows.Forms.MenuStrip();
             fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             projectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -35,24 +37,39 @@
             saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            statusStrip1 = new System.Windows.Forms.StatusStrip();
-            toolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             splitContainer = new System.Windows.Forms.SplitContainer();
-            propertyGrid = new System.Windows.Forms.PropertyGrid();
-            menuStrip1.SuspendLayout();
+            controlsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            addSunToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            addPlanetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            addMoonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             statusStrip1.SuspendLayout();
+            menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
-            splitContainer.Panel2.SuspendLayout();
             splitContainer.SuspendLayout();
             SuspendLayout();
             // 
+            // statusStrip1
+            // 
+            statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripStatusLabel1 });
+            statusStrip1.Location = new System.Drawing.Point(0, 428);
+            statusStrip1.Name = "statusStrip1";
+            statusStrip1.Size = new System.Drawing.Size(800, 22);
+            statusStrip1.TabIndex = 0;
+            statusStrip1.Text = "statusStrip1";
+            // 
+            // toolStripStatusLabel1
+            // 
+            toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            toolStripStatusLabel1.Size = new System.Drawing.Size(52, 17);
+            toolStripStatusLabel1.Text = "toolStrip";
+            // 
             // menuStrip1
             // 
-            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { fileToolStripMenuItem });
+            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { fileToolStripMenuItem, controlsToolStripMenuItem });
             menuStrip1.Location = new System.Drawing.Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new System.Drawing.Size(800, 24);
-            menuStrip1.TabIndex = 0;
+            menuStrip1.TabIndex = 1;
             menuStrip1.Text = "menuStrip1";
             // 
             // fileToolStripMenuItem
@@ -66,7 +83,7 @@
             // 
             projectToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { createToolStripMenuItem, saveToolStripMenuItem, loadToolStripMenuItem });
             projectToolStripMenuItem.Name = "projectToolStripMenuItem";
-            projectToolStripMenuItem.Size = new System.Drawing.Size(111, 22);
+            projectToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             projectToolStripMenuItem.Text = "Project";
             // 
             // createToolStripMenuItem
@@ -93,25 +110,9 @@
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new System.Drawing.Size(111, 22);
+            exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             exitToolStripMenuItem.Text = "Exit";
             exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
-            // 
-            // statusStrip1
-            // 
-            statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripStatusLabel });
-            statusStrip1.Location = new System.Drawing.Point(0, 428);
-            statusStrip1.Name = "statusStrip1";
-            statusStrip1.Size = new System.Drawing.Size(800, 22);
-            statusStrip1.TabIndex = 1;
-            statusStrip1.Text = "statusStrip1";
-            // 
-            // toolStripStatusLabel
-            // 
-            toolStripStatusLabel.Name = "toolStripStatusLabel";
-            toolStripStatusLabel.Size = new System.Drawing.Size(54, 17);
-            toolStripStatusLabel.Text = "ToolStrip";
-            toolStripStatusLabel.Click += toolStripStatusLabel1_Click;
             // 
             // splitContainer
             // 
@@ -122,21 +123,37 @@
             // splitContainer.Panel1
             // 
             splitContainer.Panel1.SizeChanged += splitContainer_Panel1_SizeChanged;
-            // 
-            // splitContainer.Panel2
-            // 
-            splitContainer.Panel2.Controls.Add(propertyGrid);
             splitContainer.Size = new System.Drawing.Size(800, 404);
-            splitContainer.SplitterDistance = 562;
+            splitContainer.SplitterDistance = 565;
             splitContainer.TabIndex = 2;
             // 
-            // propertyGrid
+            // controlsToolStripMenuItem
             // 
-            propertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
-            propertyGrid.Location = new System.Drawing.Point(0, 0);
-            propertyGrid.Name = "propertyGrid";
-            propertyGrid.Size = new System.Drawing.Size(234, 404);
-            propertyGrid.TabIndex = 0;
+            controlsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { addSunToolStripMenuItem, addPlanetToolStripMenuItem, addMoonToolStripMenuItem });
+            controlsToolStripMenuItem.Name = "controlsToolStripMenuItem";
+            controlsToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
+            controlsToolStripMenuItem.Text = "Controls";
+            // 
+            // addSunToolStripMenuItem
+            // 
+            addSunToolStripMenuItem.Name = "addSunToolStripMenuItem";
+            addSunToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            addSunToolStripMenuItem.Text = "Add Sun";
+            addSunToolStripMenuItem.Click += addSunToolStripMenuItem_Click;
+            // 
+            // addPlanetToolStripMenuItem
+            // 
+            addPlanetToolStripMenuItem.Name = "addPlanetToolStripMenuItem";
+            addPlanetToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            addPlanetToolStripMenuItem.Text = "Add Planet";
+            addPlanetToolStripMenuItem.Click += addPlanetToolStripMenuItem_Click;
+            // 
+            // addMoonToolStripMenuItem
+            // 
+            addMoonToolStripMenuItem.Name = "addMoonToolStripMenuItem";
+            addMoonToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            addMoonToolStripMenuItem.Text = "Add Moon";
+            addMoonToolStripMenuItem.Click += addMoonToolStripMenuItem_Click;
             // 
             // FormEditor
             // 
@@ -148,13 +165,13 @@
             Controls.Add(menuStrip1);
             MainMenuStrip = menuStrip1;
             Name = "FormEditor";
-            Text = "Our Cool Editor";
+            Text = "FormEditor";
+            Load += FormEditor_Load;
             SizeChanged += FormEditor_SizeChanged;
-            menuStrip1.ResumeLayout(false);
-            menuStrip1.PerformLayout();
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
-            splitContainer.Panel2.ResumeLayout(false);
+            menuStrip1.ResumeLayout(false);
+            menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer).EndInit();
             splitContainer.ResumeLayout(false);
             ResumeLayout(false);
@@ -163,16 +180,19 @@
 
         #endregion
 
+        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
-        private System.Windows.Forms.StatusStrip statusStrip1;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel;
         public System.Windows.Forms.SplitContainer splitContainer;
+        private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem projectToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem createToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem loadToolStripMenuItem;
-        public System.Windows.Forms.PropertyGrid propertyGrid;
+        private System.Windows.Forms.ToolStripMenuItem controlsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addSunToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addPlanetToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addMoonToolStripMenuItem;
     }
 }

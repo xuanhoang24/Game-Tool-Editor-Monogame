@@ -1,6 +1,4 @@
 ﻿using Editor.Editor;
-using Editor.Engine;
-using Microsoft.Xna.Framework;
 using System;
 using System.IO;
 using System.Text;
@@ -10,66 +8,10 @@ namespace Editor
 {
     public partial class FormEditor : Form
     {
-        public GameEditor Game { get => m_game; set { m_game = value; HookEvent(); } }
-        private GameEditor m_game;
-
+        public GameEditor Game { get; set; }
         public FormEditor()
         {
             InitializeComponent();
-            KeyPreview = true;
-        }
-
-        private void HookEvent()
-        {
-            Form gameForm = Control.FromHandle(Game.Window.Handle) as Form;
-            gameForm.MouseDown += GameForm_MouseDown;
-            gameForm.MouseUp += GameForm_MouseUp;
-            gameForm.MouseWheel += GameForm_MouseWheel;
-            gameForm.MouseMove += GameForm_MouseMove;
-            KeyDown += GameForm_KeyDown;
-            KeyUp += GameForm_KeyUp;
-        }
-
-        private void GameForm_MouseMove(object sender, MouseEventArgs e)
-        {
-            var p = new Vector2(e.Location.X, e.Location.Y);
-            InputController.Instance.MousePosition = p;
-        }
-
-        private void GameForm_MouseWheel(object sender, MouseEventArgs e)
-        {
-            InputController.Instance.Setwheel(e.Delta / SystemInformation.MouseWheelScrollDelta);
-        }
-
-        private void GameForm_KeyUp(object sender, KeyEventArgs e)
-        {
-            InputController.Instance.SetKeyUp(e.KeyCode);
-            e.Handled = true;
-        }
-
-        private void GameForm_KeyDown(object sender, KeyEventArgs e)
-        {
-            InputController.Instance.SetKeyDown(e.KeyCode);
-            e.Handled = true;
-        }
-
-        private void GameForm_MouseUp(object sender, MouseEventArgs e)
-        {
-            InputController.Instance.SetButtonUp(e.Button);
-            var p = new Vector2(e.Location.X, e.Location.Y);
-            InputController.Instance.DragEnd = p;
-        }
-
-        private void GameForm_MouseDown(object sender, MouseEventArgs e)
-        {
-            InputController.Instance.SetButtonDown(e.Button);
-            var p = new Vector2(e.Location.X, e.Location.Y);
-            InputController.Instance.DragStart = p;
-        }
-
-        private void toolStripStatusLabel1_Click(object sender, EventArgs e)
-        {
-
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -77,13 +19,18 @@ namespace Editor
             Game.Exit();
         }
 
-        private void FormEditor_SizeChanged(object sender, EventArgs e)
+        private void FormEditor_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void splitContainer_Panel1_SizeChanged(object sender, EventArgs e)
         {
             if (Game == null) return;
             Game.AdjustAspectRatio();
         }
 
-        private void splitContainer_Panel1_SizeChanged(object sender, EventArgs e)
+        private void FormEditor_SizeChanged(object sender, EventArgs e)
         {
             if (Game == null) return;
             Game.AdjustAspectRatio();
@@ -98,6 +45,7 @@ namespace Editor
                 Text = "Our Cool Editor - " + Game.Project.Name;
                 Game.AdjustAspectRatio();
             }
+            saveToolStripMenuItem_Click(sender, e);
         }
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
@@ -121,6 +69,28 @@ namespace Editor
                 Text = "Our Cool Editor - " + Game.Project.Name;
                 Game.AdjustAspectRatio();
             }
+        }
+
+        private void addSunToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Game.Project == null)
+            {
+                Game.Project = new(Game.Content, "Untitled.oce");
+                Text = "Our Cool Editor - " + Game.Project.Name;
+                Game.AdjustAspectRatio();
+            }
+
+            Game.Project.CurrentLevel.AddSun(Game.Content);
+        }
+
+        private void addPlanetToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Game.Project.CurrentLevel.AddPlanet(Game.Content);
+        }
+
+        private void addMoonToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Game.Project.CurrentLevel.AddMoon(Game.Content);
         }
     }
 }

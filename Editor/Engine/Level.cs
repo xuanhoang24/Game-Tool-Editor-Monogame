@@ -23,6 +23,7 @@ namespace Editor.Engine
 
         // Accessors
         public Camera GetCamera() { return m_camera; }
+        public World GetWorld() { return m_world; }
         public Entity GetSun() { return m_world.GetEntities().FirstOrDefault(e => e.HasComponent<TagComponent>() && e.GetComponent<TagComponent>().Tag == "Sun"); }
         public Entity[] GetPlanets() { return m_world.GetEntities().Where(e => e.HasComponent<TagComponent>() && e.GetComponent<TagComponent>().Tag == "World").ToArray(); }
 

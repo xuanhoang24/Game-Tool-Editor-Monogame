@@ -1,5 +1,7 @@
 ﻿using Editor.Editor;
+using Editor.Engine;
 using System;
+using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
@@ -9,9 +11,14 @@ namespace Editor
     public partial class FormEditor : Form
     {
         public GameEditor Game { get; set; }
+        private PictureBox minimapPictureBox;
+        private MinimapRenderer minimapRenderer;
+        private Timer minimapTimer;
+
         public FormEditor()
         {
             InitializeComponent();
+            InitializeMinimap();
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -122,6 +129,41 @@ namespace Editor
         private void UpdateTitle()
         {
             Text = Game.Project != null ? "Our Cool Editor - " + Game.Project.Name : "Our Cool Editor";
+        }
+
+        private void InitializeMinimap()
+        {
+            minimapPictureBox = new PictureBox
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(25, 30, 40),
+                SizeMode = PictureBoxSizeMode.Zoom
+            };
+            splitContainer.Panel2.Controls.Add(minimapPictureBox);
+
+            minimapTimer = new Timer { Interval = 33 };
+            minimapTimer.Tick += MinimapTimer_Tick;
+            minimapTimer.Start();
+        }
+
+        private void MinimapTimer_Tick(object sender, EventArgs e)
+        {
+            if (Game?.Project?.CurrentLevel == null) return;
+
+            int width = Math.Max(minimapPictureBox.Width, 100);
+            int height = Math.Max(minimapPictureBox.Height, 100);
+
+            if (minimapRenderer == null || minimapRenderer.Width != width || minimapRenderer.Height != height)
+            {
+                minimapRenderer?.Dispose();
+                minimapRenderer = new MinimapRenderer(width, height);
+            }
+
+            var world = Game.Project.CurrentLevel.GetWorld();
+            if (world != null)
+            {
+                minimapPictureBox.Image = minimapRenderer.Render(world);
+            }
         }
     }
 }

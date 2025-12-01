@@ -7,6 +7,7 @@ using Editor.Engine.ECS.Components;
 using System.IO;
 using System.Linq;
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 
@@ -40,8 +41,13 @@ namespace Editor.Engine
             var entity = m_world.CreateEntity(modelName);
             
             var model = m_content.Load<Model>(modelName);
+            model.Tag = modelName;
+            
             var texture = m_content.Load<Texture>(textureName);
+            texture.Tag = textureName;
+            
             var shader = m_content.Load<Effect>(shaderName).Clone();
+            shader.Tag = shaderName;
 
             entity.AddComponent(new TransformComponent(position, scale));
             entity.AddComponent(new MeshComponent(model, texture, shader));
@@ -67,6 +73,16 @@ namespace Editor.Engine
 
         public void AddPlanet(ContentManager _content)
         {
+            var sun = GetSun();
+            if (sun == null)
+            {
+                MessageBox.Show("You need to add a Sun first!",
+                                "No Sun",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+                return;
+            }
+
             int planetCount = GetPlanets().Length;
             if (planetCount >= 5)
             {
@@ -86,8 +102,7 @@ namespace Editor.Engine
             var planet = CreateEntity("World", "WorldDiffuse", "MyShader", position, 0.75f);
             planet.AddComponent(new RotationComponent(0f, GenerateRandomFloat(0.02f, 0.03f), 0f));
 
-            var sun = GetSun();
-            if (sun != null && sun.HasComponent<TransformComponent>())
+            if (sun.HasComponent<TransformComponent>())
             {
                 var sunTransform = sun.GetComponent<TransformComponent>();
                 float orbitAngle = (float)Math.Atan2(position.X - sunTransform.Position.X, position.Z - sunTransform.Position.Z);
@@ -205,14 +220,102 @@ namespace Editor.Engine
             }
         }
 
-        public void Serialize(BinaryWriter _stream)
+        #region Serialization
+        public void Serialize(BinaryWriter w)
         {
-            m_camera.Serialize(_stream);
+            m_camera.Serialize(w);
+            w.Write(m_world.GetEntities().Count);
+            
+            foreach (var e in m_world.GetEntities())
+            {
+                w.Write(e.Name);
+                WriteComponent(w, e.GetComponent<TagComponent>(), 
+                    c => w.Write(c.Tag));
+
+                WriteComponent(w, e.GetComponent<TransformComponent>(), 
+                    c => { HelpSerialize.Vec3(w, c.Position); 
+                        HelpSerialize.Vec3(w, c.Rotation); 
+                        w.Write(c.Scale); });
+
+                WriteComponent(w, e.GetComponent<MeshComponent>(), 
+                    c => { w.Write(c.Model.Tag?.ToString() ?? ""); 
+                        w.Write(c.Texture.Tag?.ToString() ?? ""); 
+                        w.Write(c.Shader.Tag?.ToString() ?? ""); });
+
+                WriteComponent(w, e.GetComponent<RotationComponent>(), 
+                    c => HelpSerialize.Vec3(w, c.RotationSpeed));
+
+                WriteComponent(w, e.GetComponent<OrbitComponent>(), 
+                    c => { w.Write(c.ParentEntityId); 
+                        w.Write(c.OrbitSpeed); 
+                        w.Write(c.OrbitAngle); 
+                        w.Write(c.OrbitRadius); });
+            }
+        }
+        #endregion Serialization
+
+        #region Deserialization
+        public void Deserialize(BinaryReader r, ContentManager _content)
+        {
+            m_content = _content;
+            m_camera.Deserialize(r, _content);
+            m_world.SetCamera(m_camera);
+            
+            int count = r.ReadInt32();
+            var idMap = new Dictionary<int, int>();
+            
+            for (int i = 0; i < count; i++)
+            {
+                var e = m_world.CreateEntity(r.ReadString());
+                idMap[i] = e.Id;
+                
+                ReadComponent(r, 
+                    () => e.AddComponent(new TagComponent(r.ReadString())));
+
+                ReadComponent(r, 
+                    () => { var t = new TransformComponent(HelpDeserialize.Vec3(r), 1f); 
+                        t.Rotation = HelpDeserialize.Vec3(r); 
+                        t.Scale = r.ReadSingle(); e.AddComponent(t); });
+
+                ReadComponent(r, 
+                    () => { 
+                        string modelName = r.ReadString(); 
+                        string textureName = r.ReadString(); 
+                        string shaderName = r.ReadString();
+                        if (!string.IsNullOrEmpty(modelName) && !string.IsNullOrEmpty(textureName) && !string.IsNullOrEmpty(shaderName))
+                        {
+                            var m = m_content.Load<Model>(modelName); 
+                            m.Tag = modelName;
+                            var tx = m_content.Load<Texture>(textureName); 
+                            tx.Tag = textureName;
+                            var s = m_content.Load<Effect>(shaderName).Clone(); 
+                            s.Tag = shaderName;
+                            e.AddComponent(new MeshComponent(m, tx, s)); 
+                        }
+                    });
+
+                ReadComponent(r, 
+                    () => { var v = HelpDeserialize.Vec3(r); 
+                        e.AddComponent(new RotationComponent(v.X, v.Y, v.Z)); });
+
+                ReadComponent(r, 
+                    () => { int oldId = r.ReadInt32(); 
+                        int pid = idMap.ContainsKey(oldId) ? idMap[oldId] : oldId; 
+                        e.AddComponent(new OrbitComponent(pid, r.ReadSingle(), r.ReadSingle(), r.ReadSingle())); });
+            }
+        }
+        #endregion Deserialization
+
+        #region Helpers
+        private void WriteComponent<T>(BinaryWriter w, T component, Action<T> write) where T : class
+        {
+            if (component != null) { w.Write(true); write(component); } else w.Write(false);
         }
 
-        public void Deserialize(BinaryReader _stream, ContentManager _content)
+        private void ReadComponent(BinaryReader r, Action read)
         {
-            m_camera.Deserialize(_stream, _content);
+            if (r.ReadBoolean()) read();
         }
+        #endregion Helpers
     }
 }

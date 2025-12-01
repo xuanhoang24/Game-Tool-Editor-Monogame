@@ -38,8 +38,7 @@ namespace Editor.Editor
 
         protected override void LoadContent()
         {
-            Project = new(Content, "Untitled.oce");
-            AdjustAspectRatio();
+            // Don't create project by default - wait for user action
         }
 
         protected override void Update(GameTime gameTime)
@@ -59,7 +58,7 @@ namespace Editor.Editor
 
         public void AdjustAspectRatio()
         {
-            if (Project == null) return;
+            if (Project?.CurrentLevel == null) return;
             Camera c = Project.CurrentLevel.GetCamera();
             c.Update(c.Position, m_graphics.GraphicsDevice.Viewport.AspectRatio);
         }

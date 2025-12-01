@@ -21,7 +21,7 @@ namespace Editor
 
         private void FormEditor_Load(object sender, EventArgs e)
         {
-
+            Text = "Our Cool Editor";
         }
 
         private void splitContainer_Panel1_SizeChanged(object sender, EventArgs e)
@@ -42,7 +42,7 @@ namespace Editor
             if (sfd.ShowDialog() == DialogResult.OK)
             {
                 Game.Project = new(Game.Content, sfd.FileName);
-                Text = "Our Cool Editor - " + Game.Project.Name;
+                UpdateTitle();
                 Game.AdjustAspectRatio();
             }
             saveToolStripMenuItem_Click(sender, e);
@@ -50,6 +50,26 @@ namespace Editor
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (Game.Project == null) return;
+
+            // If no folder set, prompt for save location
+            if (string.IsNullOrEmpty(Game.Project.Folder))
+            {
+                SaveFileDialog sfd = new();
+                sfd.Filter = "OCE Files|*.oce";
+                sfd.FileName = Game.Project.Name;
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    Game.Project.Folder = Path.GetDirectoryName(sfd.FileName);
+                    Game.Project.Name = Path.GetFileName(sfd.FileName);
+                    UpdateTitle();
+                }
+                else
+                {
+                    return;
+                }
+            }
+
             string fname = Path.Combine(Game.Project.Folder, Game.Project.Name);
             using var stream = File.Open(fname, FileMode.Create);
             using var writer = new BinaryWriter(stream, Encoding.UTF8, false);
@@ -66,31 +86,42 @@ namespace Editor
                 using var reader = new BinaryReader(stream, Encoding.UTF8, false);
                 Game.Project = new();
                 Game.Project.Deserialize(reader, Game.Content);
-                Text = "Our Cool Editor - " + Game.Project.Name;
+                UpdateTitle();
                 Game.AdjustAspectRatio();
             }
         }
 
         private void addSunToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Game.Project == null)
-            {
-                Game.Project = new(Game.Content, "Untitled.oce");
-                Text = "Our Cool Editor - " + Game.Project.Name;
-                Game.AdjustAspectRatio();
-            }
-
+            EnsureProject();
             Game.Project.CurrentLevel.AddSun(Game.Content);
         }
 
         private void addPlanetToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            EnsureProject();
             Game.Project.CurrentLevel.AddPlanet(Game.Content);
         }
 
         private void addMoonToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            EnsureProject();
             Game.Project.CurrentLevel.AddMoon(Game.Content);
+        }
+
+        private void EnsureProject()
+        {
+            if (Game.Project == null)
+            {
+                Game.Project = new(Game.Content, "Untitled.oce");
+                Game.AdjustAspectRatio();
+                UpdateTitle();
+            }
+        }
+
+        private void UpdateTitle()
+        {
+            Text = Game.Project != null ? "Our Cool Editor - " + Game.Project.Name : "Our Cool Editor";
         }
     }
 }

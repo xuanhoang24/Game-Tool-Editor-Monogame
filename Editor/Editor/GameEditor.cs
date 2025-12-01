@@ -11,8 +11,6 @@ namespace Editor.Editor
         internal Project Project { get; set; }
         private GraphicsDeviceManager m_graphics;
         private FormEditor m_parent;
-        private Level m_level;
-
         public GameEditor()
         {
             m_graphics = new GraphicsDeviceManager(this);
@@ -40,13 +38,13 @@ namespace Editor.Editor
 
         protected override void LoadContent()
         {
-            m_level = new();
-            m_level.LoadContent(Content);
+            Project = new(Content, "Untitled.oce");
             AdjustAspectRatio();
         }
 
         protected override void Update(GameTime gameTime)
         {
+            Project?.Update(gameTime);
             base.Update(gameTime);
         }
 
@@ -54,7 +52,7 @@ namespace Editor.Editor
         {
             GraphicsDevice.Clear(Color.Black);
 
-            if (Project != null) Project.Render();
+            Project?.Render();
 
             base.Draw(gameTime);
         }

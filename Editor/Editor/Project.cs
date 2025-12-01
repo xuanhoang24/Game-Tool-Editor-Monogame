@@ -1,5 +1,6 @@
 ﻿using Editor.Engine;
 using Editor.Engine.Interfaces;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using System.Collections.Generic;
 using System.IO;
@@ -37,9 +38,14 @@ namespace Editor.Editor
             Levels.Add(CurrentLevel);
         }
 
+        public void Update(GameTime gameTime)
+        {
+            CurrentLevel?.Update(gameTime);
+        }
+
         public void Render()
         {
-            CurrentLevel.Render();
+            CurrentLevel?.Render();
         }
 
         public void Serialize(BinaryWriter _stream)

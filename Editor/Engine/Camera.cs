@@ -5,7 +5,7 @@ using System.IO;
 
 namespace Editor.Engine
 {
-    internal class Camera : ISerializable
+    public class Camera : ISerializable
     {
         public Vector3 Position { get; set; } = new Vector3(0, 0, 0);
         public Matrix View { get; set; } = Matrix.Identity;
@@ -16,7 +16,6 @@ namespace Editor.Engine
 
         public Camera()
         {
-
         }
 
         public Camera(Vector3 _position, float _aspectRatio)

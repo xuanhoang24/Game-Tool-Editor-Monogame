@@ -28,6 +28,9 @@ namespace Editor
             toolStripStatusLabel.Text = Directory.GetCurrentDirectory();
             listBoxAssets.MouseDown += ListBoxAssets_MouseDown;
             listBoxPrefabs.MouseDown += ListBoxPrefabs_MouseDown;
+            
+            sceneTreeView.OnObjectSelected += SceneTreeView_OnObjectSelected;
+            sceneTreeView.OnObjectRenamed += SceneTreeView_OnObjectRenamed;
         }
 
         private void ListBoxAssets_MouseDown(object sender, MouseEventArgs e)
@@ -69,6 +72,8 @@ namespace Editor
             gameForm.DragDrop += GameForm_DragDrop;
             gameForm.DragOver += GameForm_DragOver;
             gameForm.AllowDrop = true;
+            
+            sceneTreeView.Initialize(m_game);
         }
 
         private void GameForm_MouseDown(object sender, MouseEventArgs e)
@@ -118,7 +123,7 @@ namespace Editor
                     Models model = new(m_game, lia.Name, "DefaultTexture", "DefaultEffect",
                                         Vector3.Zero, 1.0f);
                     m_game.Project.CurrentLevel.AddModel(model);
-                    listBoxLevel.Items.Add(new ListItemLevel() { Model = model });
+                    sceneTreeView.RefreshTree();
                 }
                 else if (lia.Type == AssetTypes.TEXTURE)
                 {
@@ -157,7 +162,7 @@ namespace Editor
                 Models m = new Models();
                 m.Deserialize(reader, m_game);
                 m_game.Project.CurrentLevel?.AddModel(m);
-                listBoxLevel.Items.Add(new ListItemLevel() { Model = m });
+                sceneTreeView.RefreshTree();
             }
         }
 
@@ -211,12 +216,7 @@ namespace Editor
 
         private void UpdateModelsList()
         {
-            listBoxLevel.Items.Clear();
-            List<Models> models = Game.Project.CurrentLevel?.GetModelsList();
-            foreach (Models model in models)
-            {
-                listBoxLevel.Items.Add(new ListItemLevel() { Model = model });
-            }
+            sceneTreeView.RefreshTree();
         }
 
         private void UpdatePrefabsList()
@@ -343,14 +343,19 @@ namespace Editor
             m_MGCBProcess.Kill();
         }
 
-        private void listBoxLevel_SelecetedIndexChange(object sender, EventArgs e)
+        private void SceneTreeView_OnObjectSelected(object selectedObject)
         {
-            if (listBoxLevel.Items.Count == 0) return;
-            Game.Project.CurrentLevel.ClearSelectedModels();
-            int index = listBoxLevel.SelectedIndex;
-            if (index == -1) return;
-            var lia = listBoxLevel.Items[index] as ListItemLevel;
-            lia.Model.Selected = true;
+            propertyGrid.SelectedObject = selectedObject;
+        }
+
+        private void SceneTreeView_OnObjectRenamed(object renamedObject)
+        {
+            // Handle object rename if needed
+        }
+
+        public void UpdateTreeViewSelection()
+        {
+            sceneTreeView.SyncSelectionFromLevel();
         }
 
         private void createPrefabToolStripMenuItem_Click(object sender, EventArgs e)

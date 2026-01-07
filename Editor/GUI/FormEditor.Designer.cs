@@ -43,7 +43,7 @@
             splitContainer = new System.Windows.Forms.SplitContainer();
             splitContainer2 = new System.Windows.Forms.SplitContainer();
             splitContainer3 = new System.Windows.Forms.SplitContainer();
-            listBoxLevel = new System.Windows.Forms.ListBox();
+            sceneTreeView = new SceneTreeView();
             listBoxPrefabs = new System.Windows.Forms.ListBox();
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             propertyGrid = new System.Windows.Forms.PropertyGrid();
@@ -72,7 +72,7 @@
             menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { fileToolStripMenuItem, assetsToolStripMenuItem });
             menuStrip1.Location = new System.Drawing.Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new System.Drawing.Size(800, 24);
+            menuStrip1.Size = new System.Drawing.Size(1379, 24);
             menuStrip1.TabIndex = 0;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -142,9 +142,9 @@
             // statusStrip1
             // 
             statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripStatusLabel });
-            statusStrip1.Location = new System.Drawing.Point(0, 428);
+            statusStrip1.Location = new System.Drawing.Point(0, 850);
             statusStrip1.Name = "statusStrip1";
-            statusStrip1.Size = new System.Drawing.Size(800, 22);
+            statusStrip1.Size = new System.Drawing.Size(1379, 22);
             statusStrip1.TabIndex = 1;
             statusStrip1.Text = "statusStrip1";
             // 
@@ -168,8 +168,8 @@
             // splitContainer.Panel2
             // 
             splitContainer.Panel2.Controls.Add(splitContainer1);
-            splitContainer.Size = new System.Drawing.Size(800, 404);
-            splitContainer.SplitterDistance = 562;
+            splitContainer.Size = new System.Drawing.Size(1379, 826);
+            splitContainer.SplitterDistance = 967;
             splitContainer.TabIndex = 2;
             // 
             // splitContainer2
@@ -181,8 +181,8 @@
             // splitContainer2.Panel1
             // 
             splitContainer2.Panel1.Controls.Add(splitContainer3);
-            splitContainer2.Size = new System.Drawing.Size(562, 404);
-            splitContainer2.SplitterDistance = 187;
+            splitContainer2.Size = new System.Drawing.Size(967, 826);
+            splitContainer2.SplitterDistance = 320;
             splitContainer2.TabIndex = 0;
             // 
             // splitContainer3
@@ -194,25 +194,25 @@
             // 
             // splitContainer3.Panel1
             // 
-            splitContainer3.Panel1.Controls.Add(listBoxLevel);
+            splitContainer3.Panel1.Controls.Add(sceneTreeView);
             // 
             // splitContainer3.Panel2
             // 
             splitContainer3.Panel2.Controls.Add(listBoxPrefabs);
-            splitContainer3.Size = new System.Drawing.Size(187, 404);
-            splitContainer3.SplitterDistance = 191;
+            splitContainer3.Size = new System.Drawing.Size(320, 826);
+            splitContainer3.SplitterDistance = 389;
             splitContainer3.TabIndex = 0;
             // 
-            // listBoxLevel
+            // sceneTreeView
             // 
-            listBoxLevel.Dock = System.Windows.Forms.DockStyle.Fill;
-            listBoxLevel.FormattingEnabled = true;
-            listBoxLevel.ItemHeight = 15;
-            listBoxLevel.Location = new System.Drawing.Point(0, 0);
-            listBoxLevel.Name = "listBoxLevel";
-            listBoxLevel.Size = new System.Drawing.Size(187, 191);
-            listBoxLevel.TabIndex = 0;
-            listBoxLevel.SelectedIndexChanged += listBoxLevel_SelecetedIndexChange;
+            sceneTreeView.AllowDrop = true;
+            sceneTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
+            sceneTreeView.HideSelection = false;
+            sceneTreeView.LabelEdit = true;
+            sceneTreeView.Location = new System.Drawing.Point(0, 0);
+            sceneTreeView.Name = "sceneTreeView";
+            sceneTreeView.Size = new System.Drawing.Size(320, 389);
+            sceneTreeView.TabIndex = 0;
             // 
             // listBoxPrefabs
             // 
@@ -221,7 +221,7 @@
             listBoxPrefabs.ItemHeight = 15;
             listBoxPrefabs.Location = new System.Drawing.Point(0, 0);
             listBoxPrefabs.Name = "listBoxPrefabs";
-            listBoxPrefabs.Size = new System.Drawing.Size(187, 209);
+            listBoxPrefabs.Size = new System.Drawing.Size(320, 433);
             listBoxPrefabs.TabIndex = 0;
             // 
             // splitContainer1
@@ -238,8 +238,8 @@
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(listBoxAssets);
-            splitContainer1.Size = new System.Drawing.Size(234, 404);
-            splitContainer1.SplitterDistance = 203;
+            splitContainer1.Size = new System.Drawing.Size(408, 826);
+            splitContainer1.SplitterDistance = 415;
             splitContainer1.TabIndex = 1;
             // 
             // propertyGrid
@@ -247,7 +247,7 @@
             propertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             propertyGrid.Location = new System.Drawing.Point(0, 0);
             propertyGrid.Name = "propertyGrid";
-            propertyGrid.Size = new System.Drawing.Size(234, 203);
+            propertyGrid.Size = new System.Drawing.Size(408, 415);
             propertyGrid.TabIndex = 0;
             // 
             // listBoxAssets
@@ -257,14 +257,14 @@
             listBoxAssets.ItemHeight = 15;
             listBoxAssets.Location = new System.Drawing.Point(0, 0);
             listBoxAssets.Name = "listBoxAssets";
-            listBoxAssets.Size = new System.Drawing.Size(234, 197);
+            listBoxAssets.Size = new System.Drawing.Size(408, 407);
             listBoxAssets.TabIndex = 0;
             // 
             // FormEditor
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(800, 450);
+            ClientSize = new System.Drawing.Size(1379, 872);
             Controls.Add(splitContainer);
             Controls.Add(statusStrip1);
             Controls.Add(menuStrip1);
@@ -314,7 +314,7 @@
         private System.Windows.Forms.ToolStripMenuItem importToolStripMenuItem;
         public System.Windows.Forms.SplitContainer splitContainer2;
         private System.Windows.Forms.SplitContainer splitContainer3;
-        public System.Windows.Forms.ListBox listBoxLevel;
+        public SceneTreeView sceneTreeView;
         private System.Windows.Forms.ListBox listBoxPrefabs;
         private System.Windows.Forms.ToolStripMenuItem createPrefabToolStripMenuItem;
     }

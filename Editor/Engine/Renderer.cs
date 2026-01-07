@@ -24,6 +24,8 @@ namespace Editor.Engine
         public void SetShaderParams(IRenderable _object)
         {
             Material m = _object.Material;
+            if (m == null || m.Effect == null) return;
+            
             Effect e = m.Effect;
             e.Parameters["World"]?.SetValue(_object.GetTransform());
             e.Parameters["WorldViewProjection"]?.SetValue(_object.GetTransform() * Camera.View * Camera.Projection);

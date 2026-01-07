@@ -1,5 +1,5 @@
 -- Don't edit right in the Visual Studio, use other
 function BeforeRenderMain()
 	t = project.CurrentLevel.GetTerrain()
-	t.Scale = t.Scale - 0.001
+	t.Scale = t.Scale
 end

@@ -67,7 +67,6 @@ namespace Editor.Editor
                 if (models.Count == 0)
                 {
                     m_parent.propertyGrid.SelectedObject = null;
-                    m_parent.listBoxLevel.SelectedIndex = -1;
                 }
                 else if (models.Count > 1)
                 {
@@ -76,16 +75,10 @@ namespace Editor.Editor
                 else
                 {
                     m_parent.propertyGrid.SelectedObject = models[0];
-                    for (int count = 0; count < m_parent.listBoxLevel.Items.Count; count++)
-                    {
-                        ListItemLevel lil = m_parent.listBoxLevel.Items[count] as ListItemLevel;
-                        if(lil.Model == models[0])
-                        {
-                            m_parent.listBoxLevel.SetSelected(count, true);
-                        }
-                    }
-
                 }
+                
+                // Update tree view selection
+                m_parent.UpdateTreeViewSelection();
             }
             Models.SelectedDirty = false;
         }

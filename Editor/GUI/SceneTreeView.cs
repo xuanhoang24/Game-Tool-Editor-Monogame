@@ -11,14 +11,23 @@ namespace Editor
 {
     public class SceneTreeView : TreeView
     {
+        #region Private Fields
         private GameEditor m_game;
         private Level m_currentLevel;
         private Dictionary<TreeNode, object> m_nodeObjectMap = new();
         private Dictionary<object, TreeNode> m_objectNodeMap = new();
+        private HashSet<TreeNode> m_selectedNodes = new();
+        private TreeNode m_lastSelectedNode = null;
+        private List<Models> m_clipboard = new();
+        #endregion
 
+        #region Events
         public event Action<object> OnObjectSelected;
+        public event Action<List<object>> OnMultipleObjectsSelected;
         public event Action<object> OnObjectRenamed;
+        #endregion
 
+        #region Constructor and Initialization
         public SceneTreeView()
         {
             InitializeComponent();
@@ -33,9 +42,11 @@ namespace Editor
             HideSelection = false;
             LabelEdit = true;
             AllowDrop = true;
+            TabStop = true;
             
-            // Set up event handlers
-            AfterSelect += OnAfterSelect;
+            // Event handlers for multi-selection
+            BeforeSelect += OnBeforeSelect;
+            MouseDown += OnMouseDown;
             AfterLabelEdit += OnAfterLabelEdit;
             MouseClick += OnMouseClick;
             DragOver += OnDragOver;
@@ -48,7 +59,9 @@ namespace Editor
             m_game = game;
             RefreshTree();
         }
+        #endregion
 
+        #region Tree Management
         public void RefreshTree()
         {
             if (m_game?.Project?.CurrentLevel == null) return;
@@ -61,10 +74,7 @@ namespace Editor
             m_objectNodeMap.Clear();
 
             // Create root level node
-            TreeNode levelNode = new TreeNode("Level")
-            {
-                Tag = "Level"
-            };
+            TreeNode levelNode = new TreeNode("Level") { Tag = "Level" };
             Nodes.Add(levelNode);
 
             // Add camera
@@ -89,10 +99,7 @@ namespace Editor
             }
 
             // Add models container
-            TreeNode modelsNode = new TreeNode("Models")
-            {
-                Tag = "ModelsContainer"
-            };
+            TreeNode modelsNode = new TreeNode("Models") { Tag = "ModelsContainer" };
             levelNode.Nodes.Add(modelsNode);
 
             // Add individual models
@@ -112,22 +119,133 @@ namespace Editor
             modelsNode.Expand();
             EndUpdate();
         }
+        #endregion
 
-        private void OnAfterSelect(object sender, TreeViewEventArgs e)
+        #region Keyboard Shortcuts
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (m_nodeObjectMap.TryGetValue(e.Node, out object selectedObject))
+            switch (keyData)
             {
-                // Clear previous selections
-                m_currentLevel?.ClearSelectedModels();
-                
-                // Set new selection
-                if (selectedObject is ISelectable selectable)
-                {
-                    selectable.Selected = true;
-                }
-                
-                OnObjectSelected?.Invoke(selectedObject);
+                case Keys.Delete:
+                    HandleDeleteKey();
+                    return true;
+                    
+                case Keys.Control | Keys.D:
+                    HandleDuplicateKey();
+                    return true;
+                    
+                case Keys.Control | Keys.C:
+                    HandleCopyKey();
+                    return true;
+                    
+                case Keys.Control | Keys.V:
+                    HandlePasteKey();
+                    return true;
+                    
+                case Keys.Control | Keys.A:
+                    HandleSelectAllKey();
+                    return true;
             }
+            
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void HandleDeleteKey()
+        {
+            var selectedObjects = GetSelectedObjects();
+            if (selectedObjects.Count > 0)
+            {
+                var models = selectedObjects.OfType<Models>().ToList();
+                if (models.Count > 0)
+                {
+                    if (models.Count == 1)
+                        DeleteObject(models[0]);
+                    else
+                        DeleteMultipleObjects(models);
+                }
+            }
+        }
+
+        private void HandleDuplicateKey()
+        {
+            var selectedObjects = GetSelectedObjects();
+            if (selectedObjects.Count > 0)
+            {
+                var models = selectedObjects.OfType<Models>().ToList();
+                if (models.Count > 0)
+                {
+                    if (models.Count == 1)
+                        DuplicateObject(models[0]);
+                    else
+                        DuplicateMultipleObjects(models);
+                }
+            }
+        }
+
+        private void HandleCopyKey()
+        {
+            var selectedObjects = GetSelectedObjects();
+            if (selectedObjects.Count > 0)
+            {
+                var models = selectedObjects.OfType<Models>().ToList();
+                if (models.Count > 0)
+                {
+                    if (models.Count == 1)
+                        CopyObject(models[0]);
+                    else
+                        CopyMultipleObjects(models);
+                }
+            }
+        }
+
+        private void HandlePasteKey()
+        {
+            PasteObjects();
+        }
+
+        private void HandleSelectAllKey()
+        {
+            SelectAllSelectableObjects();
+        }
+        #endregion
+
+        #region Event Handlers
+        private void OnBeforeSelect(object sender, TreeViewCancelEventArgs e)
+        {
+            // Cancel the TreeView's built-in selection
+            e.Cancel = true;
+        }
+
+        private void OnMouseDown(object sender, MouseEventArgs e)
+        {
+            TreeNode clickedNode = GetNodeAt(e.X, e.Y);
+            
+            if (clickedNode == null)
+            {
+                ClearAllSelections();
+                return;
+            }
+
+            if (e.Button != MouseButtons.Left) return;
+
+            bool isCtrlPressed = (ModifierKeys & Keys.Control) == Keys.Control;
+            bool isShiftPressed = (ModifierKeys & Keys.Shift) == Keys.Shift;
+
+            if (isCtrlPressed)
+            {
+                ToggleNodeSelection(clickedNode);
+            }
+            else if (isShiftPressed && m_lastSelectedNode != null)
+            {
+                SelectRange(m_lastSelectedNode, clickedNode);
+            }
+            else
+            {
+                SelectSingleNode(clickedNode);
+            }
+
+            UpdateLevelSelection();
+            NotifySelectionChanged();
         }
 
         private void OnAfterLabelEdit(object sender, NodeLabelEditEventArgs e)
@@ -155,30 +273,229 @@ namespace Editor
                 TreeNode clickedNode = GetNodeAt(e.X, e.Y);
                 if (clickedNode != null)
                 {
-                    SelectedNode = clickedNode;
+                    // If right-click on non-selected node - select only that node
+                    if (!m_selectedNodes.Contains(clickedNode))
+                    {
+                        SelectSingleNode(clickedNode);
+                        UpdateLevelSelection();
+                        NotifySelectionChanged();
+                    }
+                    
                     ShowContextMenu(clickedNode, e.Location);
                 }
             }
         }
+        #endregion
 
-        private void ShowContextMenu(TreeNode node, Point location)
+        #region Selection Management
+        private void ClearAllSelections()
         {
-            ContextMenuStrip contextMenu = new ContextMenuStrip();
-
-            if (m_nodeObjectMap.TryGetValue(node, out object nodeObject))
+            foreach (var node in m_selectedNodes)
             {
-                if (nodeObject is Models)
+                node.BackColor = SystemColors.Window;
+                node.ForeColor = SystemColors.WindowText;
+            }
+            m_selectedNodes.Clear();
+            m_lastSelectedNode = null;
+            SelectedNode = null;
+            
+            UpdateLevelSelection();
+            NotifySelectionChanged();
+        }
+
+        private void SelectSingleNode(TreeNode node)
+        {
+            // Clear previous selections
+            foreach (var selectedNode in m_selectedNodes)
+            {
+                selectedNode.BackColor = SystemColors.Window;
+                selectedNode.ForeColor = SystemColors.WindowText;
+            }
+            m_selectedNodes.Clear();
+
+            // Select the new node if it has an associated object
+            if (m_nodeObjectMap.ContainsKey(node))
+            {
+                m_selectedNodes.Add(node);
+                node.BackColor = SystemColors.Highlight;
+                node.ForeColor = SystemColors.HighlightText;
+                m_lastSelectedNode = node;
+                SelectedNode = node;
+            }
+        }
+
+        private void ToggleNodeSelection(TreeNode node)
+        {
+            if (!m_nodeObjectMap.ContainsKey(node)) return;
+
+            if (m_selectedNodes.Contains(node))
+            {
+                m_selectedNodes.Remove(node);
+                node.BackColor = SystemColors.Window;
+                node.ForeColor = SystemColors.WindowText;
+            }
+            else
+            {
+                m_selectedNodes.Add(node);
+                node.BackColor = SystemColors.Highlight;
+                node.ForeColor = SystemColors.HighlightText;
+                m_lastSelectedNode = node;
+            }
+        }
+
+        private void SelectRange(TreeNode startNode, TreeNode endNode)
+        {
+            // Clear current selections
+            foreach (var selectedNode in m_selectedNodes)
+            {
+                selectedNode.BackColor = SystemColors.Window;
+                selectedNode.ForeColor = SystemColors.WindowText;
+            }
+            m_selectedNodes.Clear();
+
+            // Get all nodes in tree order
+            var allNodes = GetAllTreeNodes().ToList();
+            int startIndex = allNodes.IndexOf(startNode);
+            int endIndex = allNodes.IndexOf(endNode);
+
+            if (startIndex == -1 || endIndex == -1) return;
+
+            int minIndex = Math.Min(startIndex, endIndex);
+            int maxIndex = Math.Max(startIndex, endIndex);
+
+            for (int i = minIndex; i <= maxIndex; i++)
+            {
+                var node = allNodes[i];
+                if (m_nodeObjectMap.ContainsKey(node))
                 {
-                    contextMenu.Items.Add("Rename", null, (s, e) => node.BeginEdit());
-                    contextMenu.Items.Add("Delete", null, (s, e) => DeleteObject(nodeObject));
-                    contextMenu.Items.Add("-");
-                    contextMenu.Items.Add("Duplicate", null, (s, e) => DuplicateObject(nodeObject));
+                    m_selectedNodes.Add(node);
+                    node.BackColor = SystemColors.Highlight;
+                    node.ForeColor = SystemColors.HighlightText;
                 }
             }
 
-            if (node.Tag?.ToString() == "ModelsContainer")
+            m_lastSelectedNode = endNode;
+        }
+
+        private void SelectAllSelectableObjects()
+        {
+            ClearAllSelections();
+            
+            foreach (var kvp in m_nodeObjectMap)
             {
-                contextMenu.Items.Add("Add Empty Model", null, (s, e) => AddEmptyModel());
+                if (kvp.Value is ISelectable)
+                {
+                    m_selectedNodes.Add(kvp.Key);
+                    kvp.Key.BackColor = SystemColors.Highlight;
+                    kvp.Key.ForeColor = SystemColors.HighlightText;
+                }
+            }
+            
+            if (m_selectedNodes.Count > 0)
+            {
+                m_lastSelectedNode = m_selectedNodes.First();
+            }
+            
+            UpdateLevelSelection();
+            NotifySelectionChanged();
+        }
+
+        private void UpdateLevelSelection()
+        {
+            if (m_currentLevel == null) return;
+
+            m_currentLevel.ClearSelectedModels();
+
+            foreach (var node in m_selectedNodes)
+            {
+                if (m_nodeObjectMap.TryGetValue(node, out object selectedObject))
+                {
+                    if (selectedObject is ISelectable selectable)
+                    {
+                        selectable.Selected = true;
+                    }
+                }
+            }
+        }
+
+        private void NotifySelectionChanged()
+        {
+            var selectedObjects = m_selectedNodes
+                .Where(node => m_nodeObjectMap.ContainsKey(node))
+                .Select(node => m_nodeObjectMap[node])
+                .ToList();
+
+            if (selectedObjects.Count == 1)
+            {
+                OnObjectSelected?.Invoke(selectedObjects[0]);
+            }
+            else if (selectedObjects.Count > 1)
+            {
+                OnMultipleObjectsSelected?.Invoke(selectedObjects);
+            }
+            else
+            {
+                OnObjectSelected?.Invoke(null);
+            }
+        }
+
+        private List<object> GetSelectedObjects()
+        {
+            return m_selectedNodes
+                .Where(node => m_nodeObjectMap.ContainsKey(node))
+                .Select(node => m_nodeObjectMap[node])
+                .ToList();
+        }
+        #endregion
+
+        #region Context Menu
+        private void ShowContextMenu(TreeNode node, Point location)
+        {
+            ContextMenuStrip contextMenu = new ContextMenuStrip();
+            var selectedObjects = GetSelectedObjects();
+
+            if (selectedObjects.Count > 1)
+            {
+                // Multi-selection context menu
+                var modelObjects = selectedObjects.OfType<Models>().ToList();
+                if (modelObjects.Count > 0)
+                {
+                    contextMenu.Items.Add($"Delete {modelObjects.Count} Objects", null, (s, e) => DeleteMultipleObjects(modelObjects));
+                    contextMenu.Items.Add($"Duplicate {modelObjects.Count} Objects", null, (s, e) => DuplicateMultipleObjects(modelObjects));
+                    contextMenu.Items.Add("-");
+                    contextMenu.Items.Add($"Copy {modelObjects.Count} Objects", null, (s, e) => CopyMultipleObjects(modelObjects));
+                    
+                    if (m_clipboard.Count > 0)
+                    {
+                        contextMenu.Items.Add($"Paste {m_clipboard.Count} Objects", null, (s, e) => PasteObjects());
+                    }
+                }
+            }
+            else if (selectedObjects.Count == 1)
+            {
+                // Single selection context menu
+                var selectedObject = selectedObjects[0];
+                if (selectedObject is Models)
+                {
+                    contextMenu.Items.Add("Rename", null, (s, e) => node.BeginEdit());
+                    contextMenu.Items.Add("Delete", null, (s, e) => DeleteObject(selectedObject));
+                    contextMenu.Items.Add("-");
+                    contextMenu.Items.Add("Duplicate", null, (s, e) => DuplicateObject(selectedObject));
+                    contextMenu.Items.Add("Copy", null, (s, e) => CopyObject(selectedObject));
+                    
+                    if (m_clipboard.Count > 0)
+                    {
+                        contextMenu.Items.Add($"Paste {m_clipboard.Count} Objects", null, (s, e) => PasteObjects());
+                    }
+                }
+            }
+            else
+            {
+                // No selection - show paste if available
+                if (m_clipboard.Count > 0)
+                {
+                    contextMenu.Items.Add($"Paste {m_clipboard.Count} Objects", null, (s, e) => PasteObjects());
+                }
             }
 
             if (contextMenu.Items.Count > 0)
@@ -186,7 +503,9 @@ namespace Editor
                 contextMenu.Show(this, location);
             }
         }
+        #endregion
 
+        #region Object Operations
         private void DeleteObject(object obj)
         {
             if (obj is Models model)
@@ -197,18 +516,29 @@ namespace Editor
             }
         }
 
+        private void DeleteMultipleObjects(List<Models> models)
+        {
+            var modelsList = m_currentLevel.GetModelsList();
+            
+            foreach (var model in models)
+            {
+                modelsList.Remove(model);
+            }
+            
+            ClearAllSelections();
+            RefreshTree();
+        }
+
         private void DuplicateObject(object obj)
         {
             if (obj is Models model && m_game != null)
             {
-                // Get the original model's asset names from tags
                 string modelName = model.Mesh?.Tag?.ToString() ?? "DefaultModel";
                 string textureName = model.Material?.Diffuse?.Tag?.ToString() ?? "DefaultTexture";
                 string effectName = model.Material?.Effect?.Tag?.ToString() ?? "DefaultEffect";
                 
-                // Create a duplicate using the proper constructor
                 var duplicate = new Models(m_game, modelName, textureName, effectName,
-                    model.Position + new Microsoft.Xna.Framework.Vector3(10, 0, 0), model.Scale);
+                    model.Position + new Microsoft.Xna.Framework.Vector3(0, 0, 0), model.Scale);
                 
                 duplicate.Rotation = model.Rotation;
                 duplicate.Name = model.Name + "_Copy";
@@ -218,20 +548,53 @@ namespace Editor
             }
         }
 
-        private void AddEmptyModel()
+        private void DuplicateMultipleObjects(List<Models> models)
         {
-            if (m_game != null)
+            foreach (var model in models)
             {
-                // Create an empty model using default assets
-                var emptyModel = new Models(m_game, "DefaultModel", "DefaultTexture", "DefaultEffect",
-                    Microsoft.Xna.Framework.Vector3.Zero, 1.0f);
-                emptyModel.Name = "Empty Model";
-                
-                m_currentLevel.AddModel(emptyModel);
-                RefreshTree();
+                DuplicateObject(model);
             }
         }
 
+        private void CopyObject(object obj)
+        {
+            if (obj is Models model)
+            {
+                m_clipboard.Clear();
+                m_clipboard.Add(model);
+            }
+        }
+
+        private void CopyMultipleObjects(List<Models> models)
+        {
+            m_clipboard.Clear();
+            m_clipboard.AddRange(models);
+        }
+
+        private void PasteObjects()
+        {
+            if (m_clipboard.Count == 0 || m_game == null) return;
+
+            foreach (var model in m_clipboard)
+            {
+                string modelName = model.Mesh?.Tag?.ToString() ?? "DefaultModel";
+                string textureName = model.Material?.Diffuse?.Tag?.ToString() ?? "DefaultTexture";
+                string effectName = model.Material?.Effect?.Tag?.ToString() ?? "DefaultEffect";
+                
+                var copy = new Models(m_game, modelName, textureName, effectName,
+                    model.Position + new Microsoft.Xna.Framework.Vector3(0, 0, 0), model.Scale);
+                
+                copy.Rotation = model.Rotation;
+                copy.Name = model.Name + "_Copy";
+                
+                m_currentLevel.AddModel(copy);
+            }
+            
+            RefreshTree();
+        }
+        #endregion
+
+        #region Drag and Drop
         private void OnDragOver(object sender, DragEventArgs e)
         {
             e.Effect = DragDropEffects.Move;
@@ -277,7 +640,35 @@ namespace Editor
             }
             return false;
         }
+        #endregion
 
+        #region Utility Methods
+        private IEnumerable<TreeNode> GetAllTreeNodes()
+        {
+            foreach (TreeNode rootNode in Nodes)
+            {
+                yield return rootNode;
+                foreach (TreeNode childNode in GetChildNodes(rootNode))
+                {
+                    yield return childNode;
+                }
+            }
+        }
+
+        private IEnumerable<TreeNode> GetChildNodes(TreeNode parent)
+        {
+            foreach (TreeNode childNode in parent.Nodes)
+            {
+                yield return childNode;
+                foreach (TreeNode grandChild in GetChildNodes(childNode))
+                {
+                    yield return grandChild;
+                }
+            }
+        }
+        #endregion
+
+        #region Public Methods
         public void SelectObject(object obj)
         {
             if (m_objectNodeMap.TryGetValue(obj, out TreeNode node))
@@ -305,5 +696,6 @@ namespace Editor
                 SelectObject(selectedModels[0]);
             }
         }
+        #endregion
     }
 }

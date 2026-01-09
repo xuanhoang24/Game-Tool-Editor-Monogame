@@ -779,7 +779,58 @@ namespace Editor
         #region Drag and Drop
         private void OnDragOver(object sender, DragEventArgs e)
         {
-            e.Effect = DragDropEffects.Move;
+            Point targetPoint = PointToClient(new Point(e.X, e.Y));
+            TreeNode targetNode = GetNodeAt(targetPoint);
+            
+            if (e.Data.GetDataPresent(typeof(TreeNode)))
+            {
+                TreeNode draggedNode = (TreeNode)e.Data.GetData(typeof(TreeNode));
+                
+                if (m_nodeObjectMap.TryGetValue(draggedNode, out object draggedObject))
+                {
+                    // Drag to empty area - ungroup models
+                    if (targetNode == null)
+                    {
+                        if (draggedObject is Models)
+                        {
+                            var parentGroup = m_currentLevel.FindGroupContaining((Models)draggedObject);
+                            if (parentGroup != null)
+                            {
+                                e.Effect = DragDropEffects.Move;
+                                return;
+                            }
+                        }
+                        e.Effect = DragDropEffects.None;
+                        return;
+                    }
+                    
+                    if (m_nodeObjectMap.TryGetValue(targetNode, out object targetObject))
+                    {
+                        // Drop models onto groups
+                        if (draggedObject is Models && targetObject is Group)
+                        {
+                            e.Effect = DragDropEffects.Move;
+                            return;
+                        }
+                        
+                        // Drop models onto Models container
+                        if (draggedObject is Models && targetNode.Tag?.ToString() == "ModelsContainer")
+                        {
+                            e.Effect = DragDropEffects.Move;
+                            return;
+                        }
+                        
+                        // Drop groups onto Groups container
+                        if (draggedObject is Group && targetNode.Tag?.ToString() == "GroupsContainer")
+                        {
+                            e.Effect = DragDropEffects.Move;
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            e.Effect = DragDropEffects.None;
         }
 
         private void OnDragDrop(object sender, DragEventArgs e)
@@ -787,9 +838,17 @@ namespace Editor
             Point targetPoint = PointToClient(new Point(e.X, e.Y));
             TreeNode targetNode = GetNodeAt(targetPoint);
             
-            if (targetNode != null && e.Data.GetDataPresent(typeof(TreeNode)))
+            if (e.Data.GetDataPresent(typeof(TreeNode)))
             {
                 TreeNode draggedNode = (TreeNode)e.Data.GetData(typeof(TreeNode));
+                
+                // Drop to empty area (ungroup)
+                if (targetNode == null)
+                {
+                    HandleDragToEmptyArea(draggedNode);
+                    return;
+                }
+                
                 if (draggedNode != targetNode && !IsChildNode(draggedNode, targetNode))
                 {
                     HandleReparenting(draggedNode, targetNode);
@@ -807,9 +866,107 @@ namespace Editor
 
         private void HandleReparenting(TreeNode draggedNode, TreeNode targetNode)
         {
-            draggedNode.Remove();
-            targetNode.Nodes.Add(draggedNode);
-            targetNode.Expand();
+            // Get the objects associated with the nodes
+            if (!m_nodeObjectMap.TryGetValue(draggedNode, out object draggedObject) ||
+                !m_nodeObjectMap.TryGetValue(targetNode, out object targetObject))
+            {
+                return;
+            }
+
+            // Handle dragging a model onto a group
+            if (draggedObject is Models draggedModel && targetObject is Group targetGroup)
+            {
+                // Remove model from its current location
+                var currentGroup = m_currentLevel.FindGroupContaining(draggedModel);
+                if (currentGroup != null)
+                {
+                    // Remove from current group
+                    currentGroup.RemoveModels(new List<Models> { draggedModel });
+                    
+                    // Clean up empty group
+                    if (currentGroup.GroupModels.Count == 0)
+                    {
+                        m_currentLevel.RemoveGroup(currentGroup);
+                    }
+                }
+                else
+                {
+                    // Remove from main models list
+                    m_currentLevel.GetModelsList().Remove(draggedModel);
+                }
+
+                // Add to target group
+                targetGroup.AddModel(draggedModel);
+                
+                RefreshTree();
+            }
+            // Handle dragging a model onto the Models container (ungroup)
+            else if (draggedObject is Models draggedModel2 && targetNode.Tag?.ToString() == "ModelsContainer")
+            {
+                var currentGroup = m_currentLevel.FindGroupContaining(draggedModel2);
+                if (currentGroup != null)
+                {
+                    // Remove from current group
+                    currentGroup.RemoveModels(new List<Models> { draggedModel2 });
+                    
+                    // Add to main models list
+                    m_currentLevel.AddModel(draggedModel2);
+                    
+                    // Clean up empty group
+                    if (currentGroup.GroupModels.Count == 0)
+                    {
+                        m_currentLevel.RemoveGroup(currentGroup);
+                    }
+                    
+                    RefreshTree();
+                }
+            }
+            // Handle dragging a group onto the Groups container
+            else if (draggedObject is Group && targetNode.Tag?.ToString() == "GroupsContainer")
+            {
+                RefreshTree();
+            }
+            // Default behavior for other cases
+            else
+            {
+                // Only do visual
+                if (targetNode.Tag?.ToString() == "ModelsContainer" || 
+                    targetNode.Tag?.ToString() == "GroupsContainer" ||
+                    targetObject is Group)
+                {
+                    RefreshTree();
+                }
+            }
+        }
+
+        private void HandleDragToEmptyArea(TreeNode draggedNode)
+        {
+            if (!m_nodeObjectMap.TryGetValue(draggedNode, out object draggedObject))
+            {
+                return;
+            }
+
+            // Handle dragging a model to empty area (ungroup)
+            if (draggedObject is Models draggedModel)
+            {
+                var currentGroup = m_currentLevel.FindGroupContaining(draggedModel);
+                if (currentGroup != null)
+                {
+                    // Remove from current group
+                    currentGroup.RemoveModels(new List<Models> { draggedModel });
+                    
+                    // Add to main models list
+                    m_currentLevel.AddModel(draggedModel);
+                    
+                    // Clean up empty group
+                    if (currentGroup.GroupModels.Count == 0)
+                    {
+                        m_currentLevel.RemoveGroup(currentGroup);
+                    }
+                    
+                    RefreshTree();
+                }
+            }
         }
 
         private bool IsChildNode(TreeNode parent, TreeNode child)

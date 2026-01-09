@@ -36,6 +36,14 @@ namespace Editor.Engine
             }
         }
 
+        public void AddModel(Models model)
+        {
+            if (model != null && !GroupModels.Contains(model))
+            {
+                GroupModels.Add(model);
+            }
+        }
+
         public void Serialize(BinaryWriter stream)
         {
             stream.Write(Name);

@@ -98,6 +98,33 @@ namespace Editor
                 m_objectNodeMap[m_currentLevel.GetTerrain()] = terrainNode;
             }
 
+            // Add groups container
+            TreeNode groupsNode = new TreeNode("Groups") { Tag = "GroupsContainer" };
+            levelNode.Nodes.Add(groupsNode);
+
+            // Add individual groups
+            var groups = m_currentLevel.GetGroupsList();
+            for (int i = 0; i < groups.Count; i++)
+            {
+                var group = groups[i];
+                string groupName = !string.IsNullOrEmpty(group.Name) ? group.Name : $"Group_{i}";
+                
+                TreeNode groupNode = new TreeNode(groupName);
+                groupsNode.Nodes.Add(groupNode);
+                m_nodeObjectMap[groupNode] = group;
+                m_objectNodeMap[group] = groupNode;
+
+                // Add models within the group as child nodes
+                foreach (var model in group.GroupModels)
+                {
+                    string modelName = !string.IsNullOrEmpty(model.Name) ? model.Name : $"Model_{model.GetHashCode()}";
+                    TreeNode modelNode = new TreeNode(modelName);
+                    groupNode.Nodes.Add(modelNode);
+                    m_nodeObjectMap[modelNode] = model;
+                    m_objectNodeMap[model] = modelNode;
+                }
+            }
+
             // Add models container
             TreeNode modelsNode = new TreeNode("Models") { Tag = "ModelsContainer" };
             levelNode.Nodes.Add(modelsNode);
@@ -116,6 +143,7 @@ namespace Editor
             }
 
             levelNode.Expand();
+            groupsNode.Expand();
             modelsNode.Expand();
             EndUpdate();
         }
@@ -262,6 +290,11 @@ namespace Editor
                 {
                     model.Name = e.Label;
                     OnObjectRenamed?.Invoke(model);
+                }
+                else if (editedObject is Group group)
+                {
+                    group.Name = e.Label;
+                    OnObjectRenamed?.Invoke(group);
                 }
             }
         }
@@ -460,6 +493,8 @@ namespace Editor
                 var modelObjects = selectedObjects.OfType<Models>().ToList();
                 if (modelObjects.Count > 0)
                 {
+                    contextMenu.Items.Add("Create Group", null, (s, e) => CreateGroupFromSelection(modelObjects));
+                    contextMenu.Items.Add("-");
                     contextMenu.Items.Add($"Delete {modelObjects.Count} Objects", null, (s, e) => DeleteMultipleObjects(modelObjects));
                     contextMenu.Items.Add($"Duplicate {modelObjects.Count} Objects", null, (s, e) => DuplicateMultipleObjects(modelObjects));
                     contextMenu.Items.Add("-");
@@ -488,6 +523,12 @@ namespace Editor
                         contextMenu.Items.Add($"Paste {m_clipboard.Count} Objects", null, (s, e) => PasteObjects());
                     }
                 }
+                else if (selectedObject is Group group)
+                {
+                    contextMenu.Items.Add("Rename", null, (s, e) => node.BeginEdit());
+                    contextMenu.Items.Add("Ungroup", null, (s, e) => UngroupObject(group));
+                    contextMenu.Items.Add("Delete", null, (s, e) => DeleteObject(selectedObject));
+                }
             }
             else
             {
@@ -505,6 +546,64 @@ namespace Editor
         }
         #endregion
 
+        #region Group Management
+        private void CreateGroupFromSelection(List<Models> models)
+        {
+            if (models.Count < 2)
+            {
+                MessageBox.Show("Please select at least 2 objects to create a group.", "Create Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // Create a new group
+            var group = new Group(models, "New Group");
+            
+            // Add group to level
+            m_currentLevel.AddGroup(group);
+            
+            // Remove individual models from level
+            var modelsList = m_currentLevel.GetModelsList();
+            foreach (var model in models)
+            {
+                modelsList.Remove(model);
+            }
+            
+            ClearAllSelections();
+            RefreshTree();
+            
+            // Select the new group
+            if (m_objectNodeMap.TryGetValue(group, out TreeNode groupNode))
+            {
+                SelectSingleNode(groupNode);
+                UpdateLevelSelection();
+                NotifySelectionChanged();
+                
+                // Start renaming the group
+                groupNode.BeginEdit();
+            }
+        }
+
+        private void UngroupObject(Group group)
+        {
+            if (group == null) return;
+
+            // Get the models from the group
+            var models = group.Ungroup();
+            
+            // Remove group from level
+            m_currentLevel.RemoveGroup(group);
+            
+            // Add individual models back to level
+            foreach (var model in models)
+            {
+                m_currentLevel.AddModel(model);
+            }
+            
+            ClearAllSelections();
+            RefreshTree();
+        }
+        #endregion
+
         #region Object Operations
         private void DeleteObject(object obj)
         {
@@ -512,6 +611,13 @@ namespace Editor
             {
                 var models = m_currentLevel.GetModelsList();
                 models.Remove(model);
+                RefreshTree();
+            }
+            else if (obj is Group group)
+            {
+                // Ungroup first, then delete all models
+                var ungroupedModels = group.Ungroup();
+                m_currentLevel.RemoveGroup(group);
                 RefreshTree();
             }
         }

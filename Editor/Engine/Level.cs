@@ -18,6 +18,7 @@ namespace Editor.Engine
 
         // Members
         private List<Models> m_models = new();
+        private List<Group> m_groups = new();
         private Camera m_camera = new(new Vector3(0, 400, 500), 16 / 9);
         private Light m_light = new() { Position = new(0, 400, -500), 
                                         Color = new(0.9f, 0.9f, 0.9f) };
@@ -41,6 +42,14 @@ namespace Editor.Engine
             {
                 model.Selected = false;
             }
+            foreach (var group in m_groups)
+            {
+                group.Selected = false;
+                foreach (var model in group.GroupModels)
+                {
+                    model.Selected = false;
+                }
+            }
             if (m_terrain != null)
             {
                 m_terrain.Selected = false;
@@ -52,9 +61,40 @@ namespace Editor.Engine
             return m_models;
         }
 
+        public List<Group> GetGroupsList()
+        {
+            return m_groups;
+        }
+
         public void AddModel(Models _model)
         {
             m_models.Add(_model);
+        }
+
+        public void AddGroup(Group _group)
+        {
+            m_groups.Add(_group);
+        }
+
+        public void RemoveGroup(Group _group)
+        {
+            m_groups.Remove(_group);
+        }
+
+        public void ApplyTextureToTarget(GameEditor game, object target, string textureName)
+        {
+            if (target is Models model)
+            {
+                model.SetTexture(game, textureName);
+            }
+        }
+
+        public void ApplyShaderToTarget(GameEditor game, object target, string shaderName)
+        {
+            if (target is Models model)
+            {
+                model.SetShader(game, shaderName);
+            }
         }
 
         public List<ISelectable> GetSelectedModels()
@@ -63,6 +103,13 @@ namespace Editor.Engine
             foreach (var model in m_models)
             {
                 if (model.Selected) models.Add(model);
+            }
+            foreach (var group in m_groups)
+            {
+                foreach (var model in group.GroupModels)
+                {
+                    if (model.Selected) models.Add(model);
+                }
             }
             if (m_terrain != null)
             {
@@ -110,6 +157,17 @@ namespace Editor.Engine
                         model.Translate(translate / 1000, m_camera);
                     }
                 }
+                foreach (Group group in m_groups)
+                {
+                    foreach (Models model in group.GroupModels)
+                    {
+                        if (model.Selected)
+                        {
+                            modelTranslate = true;
+                            model.Translate(translate / 1000, m_camera);
+                        }
+                    }
+                }
                 if (!modelTranslate)
                 {
                     m_camera.Translate(translate * 0.001f);
@@ -135,6 +193,17 @@ namespace Editor.Engine
                             model.Rotate(movement);
                         }
                     }
+                    foreach (Group group in m_groups)
+                    {
+                        foreach (Models model in group.GroupModels)
+                        {
+                            if (model.Selected)
+                            {
+                                modelRotate = true;
+                                model.Rotate(movement);
+                            }
+                        }
+                    }
                     if (!modelRotate)
                     {
                         m_camera.Rotate(movement);
@@ -156,6 +225,16 @@ namespace Editor.Engine
                         if (model.Selected)
                         {
                             model.Scale += l;
+                        }
+                    }
+                    foreach (Group group in m_groups)
+                    {
+                        foreach (Models model in group.GroupModels)
+                        {
+                            if (model.Selected)
+                            {
+                                model.Scale += l;
+                            }
                         }
                     }
                 }
@@ -191,6 +270,30 @@ namespace Editor.Engine
                     }
                 }
 
+                foreach (Group group in m_groups)
+                {
+                    foreach (Models model in group.GroupModels)
+                    {
+                        if (_select) model.Selected = false;
+                        transform = model.GetTransform();
+                        foreach (ModelMesh mesh in model.Mesh.Meshes)
+                        {
+                            BoundingSphere s = mesh.BoundingSphere;
+                            s.Transform(ref transform, out s);
+                            f = r.Intersects(s);
+                            if (f.HasValue)
+                            {
+                                f = HelpMath.PickTriangle(in mesh, ref r, ref transform);
+                                if (f.HasValue)
+                                {
+                                    if (!_select) return model;
+                                    model.Selected = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 if (m_terrain != null)
                 {
                     //Check terrain
@@ -220,6 +323,20 @@ namespace Editor.Engine
                     }
                 }
             }
+            foreach(Group group in m_groups)
+            {
+                foreach(Models m in group.GroupModels)
+                {
+                    if((Models.SelectedDirty && m.Selected))
+                    {
+                        var sfi = m.SoundEffects[(int)SoundEffectTypes.OnSelect];
+                        if(sfi?.Instance.State == SoundState.Stopped)
+                        {
+                            sfi.Instance.Play();
+                        }
+                    }
+                }
+            }
         }
 
         public void Update(float _delta)
@@ -240,6 +357,13 @@ namespace Editor.Engine
             {
                 r.Render(m);
             }
+            foreach (Group g in m_groups)
+            {
+                foreach (Models m in g.GroupModels)
+                {
+                    r.Render(m);
+                }
+            }
             if (m_terrain != null)
             {
                 r.Render(m_terrain);
@@ -253,6 +377,11 @@ namespace Editor.Engine
             {
                 model.Serialize(_stream);
             }
+            _stream.Write(m_groups.Count);
+            foreach (var group in m_groups)
+            {
+                group.Serialize(_stream);
+            }
             m_camera.Serialize(_stream);
         }
 
@@ -265,6 +394,23 @@ namespace Editor.Engine
                 m.Deserialize(_stream, _game);
                 m_models.Add(m);
             }
+            
+            // Read groups
+            try
+            {
+                int groupCount = _stream.ReadInt32();
+                for (int count = 0; count < groupCount; count++)
+                {
+                    Group g = new();
+                    g.Deserialize(_stream, _game);
+                    m_groups.Add(g);
+                }
+            }
+            catch
+            {
+                // Save files without groups - ignore
+            }
+            
             m_camera.Deserialize(_stream, _game);
         }
 

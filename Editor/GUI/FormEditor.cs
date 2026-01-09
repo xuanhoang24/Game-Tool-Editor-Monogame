@@ -38,7 +38,11 @@ namespace Editor
             if (listBoxAssets.Items.Count == 0) return;
 
             int index = listBoxAssets.IndexFromPoint(e.X, e.Y);
+            if (index < 0) return;
+            
             var lia = listBoxAssets.Items[index] as ListItemAsset;
+            if (lia == null) return;
+            
             if ((lia.Type == AssetTypes.MODEL) ||
                 (lia.Type == AssetTypes.TEXTURE) ||
                 (lia.Type == AssetTypes.EFFECT) ||

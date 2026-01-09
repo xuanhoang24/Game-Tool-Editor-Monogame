@@ -81,6 +81,18 @@ namespace Editor.Engine
             m_groups.Remove(_group);
         }
 
+        public Group FindGroupContaining(Models model)
+        {
+            foreach (var group in m_groups)
+            {
+                if (group.GroupModels.Contains(model))
+                {
+                    return group;
+                }
+            }
+            return null;
+        }
+
         public void ApplyTextureToTarget(GameEditor game, object target, string textureName)
         {
             if (target is Models model)

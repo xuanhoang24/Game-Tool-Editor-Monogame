@@ -28,6 +28,14 @@ namespace Editor.Engine
             return ungroupedModels;
         }
 
+        public void RemoveModels(List<Models> modelsToRemove)
+        {
+            foreach (var model in modelsToRemove)
+            {
+                GroupModels.Remove(model);
+            }
+        }
+
         public void Serialize(BinaryWriter stream)
         {
             stream.Write(Name);

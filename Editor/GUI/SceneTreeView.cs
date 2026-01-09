@@ -493,8 +493,19 @@ namespace Editor
                 var modelObjects = selectedObjects.OfType<Models>().ToList();
                 if (modelObjects.Count > 0)
                 {
-                    contextMenu.Items.Add("Create Group", null, (s, e) => CreateGroupFromSelection(modelObjects));
-                    contextMenu.Items.Add("-");
+                    bool anyInGroup = modelObjects.Any(model => m_currentLevel.FindGroupContaining(model) != null);
+                    
+                    if (!anyInGroup)
+                    {
+                        contextMenu.Items.Add("Create Group", null, (s, e) => CreateGroupFromSelection(modelObjects));
+                        contextMenu.Items.Add("-");
+                    }
+                    else
+                    {
+                        contextMenu.Items.Add("Ungroup Selected Models", null, (s, e) => UngroupSelectedModels(modelObjects));
+                        contextMenu.Items.Add("-");
+                    }
+                    
                     contextMenu.Items.Add($"Delete {modelObjects.Count} Objects", null, (s, e) => DeleteMultipleObjects(modelObjects));
                     contextMenu.Items.Add($"Duplicate {modelObjects.Count} Objects", null, (s, e) => DuplicateMultipleObjects(modelObjects));
                     contextMenu.Items.Add("-");
@@ -510,9 +521,18 @@ namespace Editor
             {
                 // Single selection context menu
                 var selectedObject = selectedObjects[0];
-                if (selectedObject is Models)
+                if (selectedObject is Models model)
                 {
                     contextMenu.Items.Add("Rename", null, (s, e) => node.BeginEdit());
+                    
+                    // Check if this model is in a group
+                    var parentGroup = m_currentLevel.FindGroupContaining(model);
+                    if (parentGroup != null)
+                    {
+                        contextMenu.Items.Add("Ungroup from Group", null, (s, e) => UngroupSingleModel(model));
+                        contextMenu.Items.Add("-");
+                    }
+                    
                     contextMenu.Items.Add("Delete", null, (s, e) => DeleteObject(selectedObject));
                     contextMenu.Items.Add("-");
                     contextMenu.Items.Add("Duplicate", null, (s, e) => DuplicateObject(selectedObject));
@@ -599,6 +619,62 @@ namespace Editor
                 m_currentLevel.AddModel(model);
             }
             
+            ClearAllSelections();
+            RefreshTree();
+        }
+
+        private void UngroupSingleModel(Models model)
+        {
+            var parentGroup = m_currentLevel.FindGroupContaining(model);
+            if (parentGroup == null) return;
+
+            // Remove the model from the group
+            parentGroup.RemoveModels(new List<Models> { model });
+            
+            // Add the model back to the main models list
+            m_currentLevel.AddModel(model);
+            
+            // If the group is now empty, remove it
+            if (parentGroup.GroupModels.Count == 0)
+            {
+                m_currentLevel.RemoveGroup(parentGroup);
+            }
+            
+            // Clear selection and refresh tree
+            ClearAllSelections();
+            RefreshTree();
+        }
+
+        private void UngroupSelectedModels(List<Models> models)
+        {
+            var groupsToCheck = new HashSet<Group>();
+            
+            foreach (var model in models)
+            {
+                var parentGroup = m_currentLevel.FindGroupContaining(model);
+                if (parentGroup != null)
+                {
+                    // Remove the model from the group
+                    parentGroup.RemoveModels(new List<Models> { model });
+                    
+                    // Add the model back to the main models list
+                    m_currentLevel.AddModel(model);
+                    
+                    // Track groups that might become empty
+                    groupsToCheck.Add(parentGroup);
+                }
+            }
+            
+            // Remove any groups that became empty
+            foreach (var group in groupsToCheck)
+            {
+                if (group.GroupModels.Count == 0)
+                {
+                    m_currentLevel.RemoveGroup(group);
+                }
+            }
+            
+            // Clear selection and refresh tree
             ClearAllSelections();
             RefreshTree();
         }

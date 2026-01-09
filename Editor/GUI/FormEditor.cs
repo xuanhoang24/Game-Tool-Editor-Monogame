@@ -390,5 +390,17 @@ namespace Editor
             ListItemPrefab item = new() { Name = m.Name + ".prefab" };
             listBoxPrefabs.Items.Add(item);
         }
+
+        private void openScriptEditorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Game?.Project == null)
+            {
+                MessageBox.Show("Please load or create a project first.", "No Project", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var scriptViewer = new ScriptViewer(Game.Project);
+            scriptViewer.Show();
+        }
     }
 }

@@ -38,6 +38,8 @@
             assetsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             importToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             createPrefabToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            scriptsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            openScriptEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             statusStrip1 = new System.Windows.Forms.StatusStrip();
             toolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             splitContainer = new System.Windows.Forms.SplitContainer();
@@ -69,7 +71,7 @@
             // 
             // menuStrip1
             // 
-            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { fileToolStripMenuItem, assetsToolStripMenuItem });
+            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { fileToolStripMenuItem, assetsToolStripMenuItem, scriptsToolStripMenuItem });
             menuStrip1.Location = new System.Drawing.Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new System.Drawing.Size(1379, 24);
@@ -138,6 +140,20 @@
             createPrefabToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
             createPrefabToolStripMenuItem.Text = "Create Prefab";
             createPrefabToolStripMenuItem.Click += createPrefabToolStripMenuItem_Click;
+            // 
+            // scriptsToolStripMenuItem
+            // 
+            scriptsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { openScriptEditorToolStripMenuItem });
+            scriptsToolStripMenuItem.Name = "scriptsToolStripMenuItem";
+            scriptsToolStripMenuItem.Size = new System.Drawing.Size(57, 20);
+            scriptsToolStripMenuItem.Text = "Scripts";
+            // 
+            // openScriptEditorToolStripMenuItem
+            // 
+            openScriptEditorToolStripMenuItem.Name = "openScriptEditorToolStripMenuItem";
+            openScriptEditorToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            openScriptEditorToolStripMenuItem.Text = "Open Script Editor";
+            openScriptEditorToolStripMenuItem.Click += openScriptEditorToolStripMenuItem_Click;
             // 
             // statusStrip1
             // 
@@ -317,5 +333,7 @@
         public SceneTreeView sceneTreeView;
         private System.Windows.Forms.ListBox listBoxPrefabs;
         private System.Windows.Forms.ToolStripMenuItem createPrefabToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem scriptsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openScriptEditorToolStripMenuItem;
     }
 }

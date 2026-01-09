@@ -18,6 +18,7 @@ namespace Editor
         private Dictionary<object, TreeNode> m_objectNodeMap = new();
         private HashSet<TreeNode> m_selectedNodes = new();
         private TreeNode m_lastSelectedNode = null;
+        private TreeNode m_pendingSelectionClear = null;
         private List<Models> m_clipboard = new();
         #endregion
 
@@ -47,6 +48,7 @@ namespace Editor
             // Event handlers for multi-selection
             BeforeSelect += OnBeforeSelect;
             MouseDown += OnMouseDown;
+            MouseUp += OnMouseUp;
             AfterLabelEdit += OnAfterLabelEdit;
             MouseClick += OnMouseClick;
             DragOver += OnDragOver;
@@ -269,11 +271,30 @@ namespace Editor
             }
             else
             {
-                SelectSingleNode(clickedNode);
+                if (m_selectedNodes.Contains(clickedNode) && m_selectedNodes.Count > 1)
+                {
+                    m_pendingSelectionClear = clickedNode;
+                    return;
+                }
+                else
+                {
+                    SelectSingleNode(clickedNode);
+                }
             }
 
             UpdateLevelSelection();
             NotifySelectionChanged();
+        }
+
+        private void OnMouseUp(object sender, MouseEventArgs e)
+        {
+            if (m_pendingSelectionClear != null)
+            {
+                SelectSingleNode(m_pendingSelectionClear);
+                UpdateLevelSelection();
+                NotifySelectionChanged();
+                m_pendingSelectionClear = null;
+            }
         }
 
         private void OnAfterLabelEdit(object sender, NodeLabelEditEventArgs e)
@@ -782,6 +803,42 @@ namespace Editor
             Point targetPoint = PointToClient(new Point(e.X, e.Y));
             TreeNode targetNode = GetNodeAt(targetPoint);
             
+            // Handle multiple models drag
+            if (e.Data.GetDataPresent("MultipleModels"))
+            {
+                var draggedModels = (List<Models>)e.Data.GetData("MultipleModels");
+                
+                // Drag to empty area - allow ungroup models
+                if (targetNode == null)
+                {
+                    // Allow if any of the models are in groups
+                    bool anyInGroup = draggedModels.Any(model => m_currentLevel.FindGroupContaining(model) != null);
+                    e.Effect = anyInGroup ? DragDropEffects.Move : DragDropEffects.None;
+                    return;
+                }
+                
+                if (m_nodeObjectMap.TryGetValue(targetNode, out object targetObject))
+                {
+                    // Allow drop models onto groups
+                    if (targetObject is Group)
+                    {
+                        e.Effect = DragDropEffects.Move;
+                        return;
+                    }
+                    
+                    // Allow drop models onto Models container
+                    if (targetNode.Tag?.ToString() == "ModelsContainer")
+                    {
+                        e.Effect = DragDropEffects.Move;
+                        return;
+                    }
+                }
+                
+                e.Effect = DragDropEffects.None;
+                return;
+            }
+            
+            // Handle single item drag
             if (e.Data.GetDataPresent(typeof(TreeNode)))
             {
                 TreeNode draggedNode = (TreeNode)e.Data.GetData(typeof(TreeNode));
@@ -838,6 +895,23 @@ namespace Editor
             Point targetPoint = PointToClient(new Point(e.X, e.Y));
             TreeNode targetNode = GetNodeAt(targetPoint);
             
+            // Handle multiple models drag
+            if (e.Data.GetDataPresent("MultipleModels"))
+            {
+                var draggedModels = (List<Models>)e.Data.GetData("MultipleModels");
+                
+                // Handle drop to empty area (ungroup)
+                if (targetNode == null)
+                {
+                    HandleMultipleModelsToEmptyArea(draggedModels);
+                    return;
+                }
+                
+                HandleMultipleModelsReparenting(draggedModels, targetNode);
+                return;
+            }
+            
+            // Handle single item drag
             if (e.Data.GetDataPresent(typeof(TreeNode)))
             {
                 TreeNode draggedNode = (TreeNode)e.Data.GetData(typeof(TreeNode));
@@ -858,8 +932,34 @@ namespace Editor
 
         private void OnItemDrag(object sender, ItemDragEventArgs e)
         {
+            m_pendingSelectionClear = null;
+            
             if (e.Item is TreeNode node && m_nodeObjectMap.ContainsKey(node))
             {
+                var selectedModels = m_selectedNodes
+                    .Where(n => m_nodeObjectMap.ContainsKey(n) && m_nodeObjectMap[n] is Models)
+                    .Select(n => m_nodeObjectMap[n])
+                    .Cast<Models>()
+                    .ToList();
+
+                // Drag multiple selected models
+                if (selectedModels.Count > 1)
+                {
+                    DataObject dataObject = new DataObject();
+                    dataObject.SetData("MultipleModels", selectedModels);
+                    DoDragDrop(dataObject, DragDropEffects.Move);
+                    return;
+                }
+                
+                if (selectedModels.Count == 1 && m_selectedNodes.Contains(node))
+                {
+                    DataObject dataObject = new DataObject();
+                    dataObject.SetData("MultipleModels", selectedModels);
+                    DoDragDrop(dataObject, DragDropEffects.Move);
+                    return;
+                }
+                
+                // Single item drag (fallback)
                 DoDragDrop(e.Item, DragDropEffects.Move);
             }
         }
@@ -967,6 +1067,109 @@ namespace Editor
                     RefreshTree();
                 }
             }
+        }
+
+        private void HandleMultipleModelsReparenting(List<Models> draggedModels, TreeNode targetNode)
+        {
+            if (!m_nodeObjectMap.TryGetValue(targetNode, out object targetObject))
+            {
+                return;
+            }
+
+            var groupsToCheck = new HashSet<Group>();
+
+            // Handle drag multiple models onto a group
+            if (targetObject is Group targetGroup)
+            {
+                foreach (var draggedModel in draggedModels)
+                {
+                    // Remove model from its current location
+                    var currentGroup = m_currentLevel.FindGroupContaining(draggedModel);
+                    if (currentGroup != null)
+                    {
+                        // Remove from current group
+                        currentGroup.RemoveModels(new List<Models> { draggedModel });
+                        groupsToCheck.Add(currentGroup);
+                    }
+                    else
+                    {
+                        // Remove from main models list
+                        m_currentLevel.GetModelsList().Remove(draggedModel);
+                    }
+
+                    // Add to target group
+                    targetGroup.AddModel(draggedModel);
+                }
+                
+                // Clean up empty groups
+                foreach (var group in groupsToCheck)
+                {
+                    if (group.GroupModels.Count == 0)
+                    {
+                        m_currentLevel.RemoveGroup(group);
+                    }
+                }
+                
+                RefreshTree();
+            }
+            // Handle drag multiple models onto the Models container (ungroup)
+            else if (targetNode.Tag?.ToString() == "ModelsContainer")
+            {
+                foreach (var draggedModel in draggedModels)
+                {
+                    var currentGroup = m_currentLevel.FindGroupContaining(draggedModel);
+                    if (currentGroup != null)
+                    {
+                        // Remove from current group
+                        currentGroup.RemoveModels(new List<Models> { draggedModel });
+                        groupsToCheck.Add(currentGroup);
+                        
+                        // Add to main models list
+                        m_currentLevel.AddModel(draggedModel);
+                    }
+                }
+                
+                // Clean up empty groups
+                foreach (var group in groupsToCheck)
+                {
+                    if (group.GroupModels.Count == 0)
+                    {
+                        m_currentLevel.RemoveGroup(group);
+                    }
+                }
+                
+                RefreshTree();
+            }
+        }
+
+        private void HandleMultipleModelsToEmptyArea(List<Models> draggedModels)
+        {
+            var groupsToCheck = new HashSet<Group>();
+            
+            foreach (var draggedModel in draggedModels)
+            {
+                var currentGroup = m_currentLevel.FindGroupContaining(draggedModel);
+                if (currentGroup != null)
+                {
+                    // Remove from current group
+                    currentGroup.RemoveModels(new List<Models> { draggedModel });
+                    groupsToCheck.Add(currentGroup);
+                    
+                    // Add to main models list
+                    m_currentLevel.AddModel(draggedModel);
+                }
+            }
+            
+            // Clean up empty groups
+            foreach (var group in groupsToCheck)
+            {
+                if (group.GroupModels.Count == 0)
+                {
+                    m_currentLevel.RemoveGroup(group);
+                }
+            }
+            
+            RefreshTree();
         }
 
         private bool IsChildNode(TreeNode parent, TreeNode child)

@@ -144,10 +144,10 @@ namespace Editor
                 m_objectNodeMap[model] = modelNode;
             }
 
+            EndUpdate();
             levelNode.Expand();
             groupsNode.Expand();
             modelsNode.Expand();
-            EndUpdate();
         }
         #endregion
 

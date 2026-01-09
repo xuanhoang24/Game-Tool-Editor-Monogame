@@ -44,15 +44,24 @@ namespace Editor.Engine
             }
             foreach (var group in m_groups)
             {
-                group.Selected = false;
-                foreach (var model in group.GroupModels)
-                {
-                    model.Selected = false;
-                }
+                ClearGroupSelection(group);
             }
             if (m_terrain != null)
             {
                 m_terrain.Selected = false;
+            }
+        }
+
+        private void ClearGroupSelection(Group group)
+        {
+            group.Selected = false;
+            foreach (var model in group.GroupModels)
+            {
+                model.Selected = false;
+            }
+            foreach (var nestedGroup in group.NestedGroups)
+            {
+                ClearGroupSelection(nestedGroup);
             }
         }
 
@@ -85,9 +94,10 @@ namespace Editor.Engine
         {
             foreach (var group in m_groups)
             {
-                if (group.GroupModels.Contains(model))
+                var found = group.FindGroupContaining(model);
+                if (found != null)
                 {
-                    return group;
+                    return found;
                 }
             }
             return null;
@@ -118,16 +128,25 @@ namespace Editor.Engine
             }
             foreach (var group in m_groups)
             {
-                foreach (var model in group.GroupModels)
-                {
-                    if (model.Selected) models.Add(model);
-                }
+                GetSelectedModelsFromGroup(group, models);
             }
             if (m_terrain != null)
             {
                 if (m_terrain.Selected) models.Add(m_terrain);
             }
             return models;
+        }
+
+        private void GetSelectedModelsFromGroup(Group group, List<ISelectable> models)
+        {
+            foreach (var model in group.GroupModels)
+            {
+                if (model.Selected) models.Add(model);
+            }
+            foreach (var nestedGroup in group.NestedGroups)
+            {
+                GetSelectedModelsFromGroup(nestedGroup, models);
+            }
         }
 
         public void HandleTranslate()
@@ -171,13 +190,9 @@ namespace Editor.Engine
                 }
                 foreach (Group group in m_groups)
                 {
-                    foreach (Models model in group.GroupModels)
+                    if (HandleTranslateInGroup(group, translate))
                     {
-                        if (model.Selected)
-                        {
-                            modelTranslate = true;
-                            model.Translate(translate / 1000, m_camera);
-                        }
+                        modelTranslate = true;
                     }
                 }
                 if (!modelTranslate)
@@ -207,13 +222,9 @@ namespace Editor.Engine
                     }
                     foreach (Group group in m_groups)
                     {
-                        foreach (Models model in group.GroupModels)
+                        if (HandleRotateInGroup(group, movement))
                         {
-                            if (model.Selected)
-                            {
-                                modelRotate = true;
-                                model.Rotate(movement);
-                            }
+                            modelRotate = true;
                         }
                     }
                     if (!modelRotate)
@@ -241,15 +252,66 @@ namespace Editor.Engine
                     }
                     foreach (Group group in m_groups)
                     {
-                        foreach (Models model in group.GroupModels)
-                        {
-                            if (model.Selected)
-                            {
-                                model.Scale += l;
-                            }
-                        }
+                        HandleScaleInGroup(group, l);
                     }
                 }
+            }
+        }
+
+        private bool HandleTranslateInGroup(Group group, Vector3 translate)
+        {
+            bool modelTranslated = false;
+            foreach (Models model in group.GroupModels)
+            {
+                if (model.Selected)
+                {
+                    modelTranslated = true;
+                    model.Translate(translate / 1000, m_camera);
+                }
+            }
+            foreach (Group nestedGroup in group.NestedGroups)
+            {
+                if (HandleTranslateInGroup(nestedGroup, translate))
+                {
+                    modelTranslated = true;
+                }
+            }
+            return modelTranslated;
+        }
+
+        private bool HandleRotateInGroup(Group group, Vector3 movement)
+        {
+            bool modelRotated = false;
+            foreach (Models model in group.GroupModels)
+            {
+                if (model.Selected)
+                {
+                    modelRotated = true;
+                    model.Rotate(movement);
+                }
+            }
+            foreach (Group nestedGroup in group.NestedGroups)
+            {
+                if (HandleRotateInGroup(nestedGroup, movement))
+                {
+                    modelRotated = true;
+                }
+            }
+            return modelRotated;
+        }
+
+        private void HandleScaleInGroup(Group group, float scale)
+        {
+            foreach (Models model in group.GroupModels)
+            {
+                if (model.Selected)
+                {
+                    model.Scale += scale;
+                }
+            }
+            foreach (Group nestedGroup in group.NestedGroups)
+            {
+                HandleScaleInGroup(nestedGroup, scale);
             }
         }
 
@@ -284,26 +346,7 @@ namespace Editor.Engine
 
                 foreach (Group group in m_groups)
                 {
-                    foreach (Models model in group.GroupModels)
-                    {
-                        if (_select) model.Selected = false;
-                        transform = model.GetTransform();
-                        foreach (ModelMesh mesh in model.Mesh.Meshes)
-                        {
-                            BoundingSphere s = mesh.BoundingSphere;
-                            s.Transform(ref transform, out s);
-                            f = r.Intersects(s);
-                            if (f.HasValue)
-                            {
-                                f = HelpMath.PickTriangle(in mesh, ref r, ref transform);
-                                if (f.HasValue)
-                                {
-                                    if (!_select) return model;
-                                    model.Selected = true;
-                                }
-                            }
-                        }
-                    }
+                    HandlePickInGroup(group, r, _select);
                 }
 
                 if (m_terrain != null)
@@ -322,6 +365,41 @@ namespace Editor.Engine
             return null;
         }
 
+        private ISelectable HandlePickInGroup(Group group, Ray r, bool _select)
+        {
+            Matrix transform;
+            float? f;
+            
+            foreach (Models model in group.GroupModels)
+            {
+                if (_select) model.Selected = false;
+                transform = model.GetTransform();
+                foreach (ModelMesh mesh in model.Mesh.Meshes)
+                {
+                    BoundingSphere s = mesh.BoundingSphere;
+                    s.Transform(ref transform, out s);
+                    f = r.Intersects(s);
+                    if (f.HasValue)
+                    {
+                        f = HelpMath.PickTriangle(in mesh, ref r, ref transform);
+                        if (f.HasValue)
+                        {
+                            if (!_select) return model;
+                            model.Selected = true;
+                        }
+                    }
+                }
+            }
+            
+            foreach (Group nestedGroup in group.NestedGroups)
+            {
+                var result = HandlePickInGroup(nestedGroup, r, _select);
+                if (result != null) return result;
+            }
+            
+            return null;
+        }
+
         private void HandleAudio()
         {
             foreach(Models m in m_models)
@@ -337,17 +415,26 @@ namespace Editor.Engine
             }
             foreach(Group group in m_groups)
             {
-                foreach(Models m in group.GroupModels)
+                HandleAudioInGroup(group);
+            }
+        }
+
+        private void HandleAudioInGroup(Group group)
+        {
+            foreach(Models m in group.GroupModels)
+            {
+                if((Models.SelectedDirty && m.Selected))
                 {
-                    if((Models.SelectedDirty && m.Selected))
+                    var sfi = m.SoundEffects[(int)SoundEffectTypes.OnSelect];
+                    if(sfi?.Instance.State == SoundState.Stopped)
                     {
-                        var sfi = m.SoundEffects[(int)SoundEffectTypes.OnSelect];
-                        if(sfi?.Instance.State == SoundState.Stopped)
-                        {
-                            sfi.Instance.Play();
-                        }
+                        sfi.Instance.Play();
                     }
                 }
+            }
+            foreach(Group nestedGroup in group.NestedGroups)
+            {
+                HandleAudioInGroup(nestedGroup);
             }
         }
 
@@ -371,14 +458,23 @@ namespace Editor.Engine
             }
             foreach (Group g in m_groups)
             {
-                foreach (Models m in g.GroupModels)
-                {
-                    r.Render(m);
-                }
+                RenderGroup(g, r);
             }
             if (m_terrain != null)
             {
                 r.Render(m_terrain);
+            }
+        }
+
+        private void RenderGroup(Group group, Renderer renderer)
+        {
+            foreach (Models m in group.GroupModels)
+            {
+                renderer.Render(m);
+            }
+            foreach (Group nestedGroup in group.NestedGroups)
+            {
+                RenderGroup(nestedGroup, renderer);
             }
         }
 

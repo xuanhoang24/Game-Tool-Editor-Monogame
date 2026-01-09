@@ -116,15 +116,8 @@ namespace Editor
                 m_nodeObjectMap[groupNode] = group;
                 m_objectNodeMap[group] = groupNode;
 
-                // Add models within the group as child nodes
-                foreach (var model in group.GroupModels)
-                {
-                    string modelName = !string.IsNullOrEmpty(model.Name) ? model.Name : $"Model_{model.GetHashCode()}";
-                    TreeNode modelNode = new TreeNode(modelName);
-                    groupNode.Nodes.Add(modelNode);
-                    m_nodeObjectMap[modelNode] = model;
-                    m_objectNodeMap[model] = modelNode;
-                }
+                // Add models and nested groups within the group
+                AddGroupContents(groupNode, group);
             }
 
             // Add models container
@@ -148,6 +141,32 @@ namespace Editor
             levelNode.Expand();
             groupsNode.Expand();
             modelsNode.Expand();
+        }
+
+        private void AddGroupContents(TreeNode groupNode, Group group)
+        {
+            // Add models within the group
+            foreach (var model in group.GroupModels)
+            {
+                string modelName = !string.IsNullOrEmpty(model.Name) ? model.Name : $"Model_{model.GetHashCode()}";
+                TreeNode modelNode = new TreeNode(modelName);
+                groupNode.Nodes.Add(modelNode);
+                m_nodeObjectMap[modelNode] = model;
+                m_objectNodeMap[model] = modelNode;
+            }
+
+            // Add nested groups
+            foreach (var nestedGroup in group.NestedGroups)
+            {
+                string nestedGroupName = !string.IsNullOrEmpty(nestedGroup.Name) ? nestedGroup.Name : "Nested Group";
+                TreeNode nestedGroupNode = new TreeNode(nestedGroupName);
+                groupNode.Nodes.Add(nestedGroupNode);
+                m_nodeObjectMap[nestedGroupNode] = nestedGroup;
+                m_objectNodeMap[nestedGroup] = nestedGroupNode;
+
+                // Recursively add contents of nested group
+                AddGroupContents(nestedGroupNode, nestedGroup);
+            }
         }
         #endregion
 
@@ -523,6 +542,14 @@ namespace Editor
                     }
                     else
                     {
+                        // Check if all selected models are in the same group
+                        var parentGroups = modelObjects.Select(model => m_currentLevel.FindGroupContaining(model)).Distinct().ToList();
+                        if (parentGroups.Count == 1 && parentGroups[0] != null)
+                        {
+                            contextMenu.Items.Add("Create Nested Group", null, (s, e) => CreateNestedGroupFromSelection(modelObjects, parentGroups[0]));
+                            contextMenu.Items.Add("-");
+                        }
+                        
                         contextMenu.Items.Add("Ungroup Selected Models", null, (s, e) => UngroupSelectedModels(modelObjects));
                         contextMenu.Items.Add("-");
                     }
@@ -588,6 +615,40 @@ namespace Editor
         #endregion
 
         #region Group Management
+        private void CreateNestedGroupFromSelection(List<Models> models, Group parentGroup)
+        {
+            if (models.Count < 2)
+            {
+                MessageBox.Show("Please select at least 2 objects to create a nested group.", "Create Nested Group", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // Create a new nested group
+            var nestedGroup = new Group(models, "New Nested Group");
+            
+            // Remove models from parent group
+            parentGroup.RemoveModels(models);
+            
+            // Add nested group to parent group
+            parentGroup.AddNestedGroup(nestedGroup);
+            
+            ClearAllSelections();
+            RefreshTree();
+            
+            // Select the new nested group
+            if (m_objectNodeMap.TryGetValue(nestedGroup, out TreeNode nestedGroupNode))
+            {
+                SelectSingleNode(nestedGroupNode);
+                UpdateLevelSelection();
+                NotifySelectionChanged();
+                
+                nestedGroupNode.EnsureVisible();
+                Update();
+                
+                BeginInvoke(new Action(() => nestedGroupNode.BeginEdit()));
+            }
+        }
+
         private void CreateGroupFromSelection(List<Models> models)
         {
             if (models.Count < 2)
@@ -619,8 +680,10 @@ namespace Editor
                 UpdateLevelSelection();
                 NotifySelectionChanged();
                 
-                // Start renaming the group
-                groupNode.BeginEdit();
+                groupNode.EnsureVisible();
+                Update();
+                
+                BeginInvoke(new Action(() => groupNode.BeginEdit()));
             }
         }
 

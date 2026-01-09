@@ -8,6 +8,7 @@ namespace Editor.Engine
     internal class Group : ISerializable
     {
         public List<Models> GroupModels { get; private set; } = new List<Models>();
+        public List<Group> NestedGroups { get; private set; } = new List<Group>();
         public string Name { get; set; } = "Group";
         public bool Selected { get; set; } = false;
 
@@ -20,10 +21,25 @@ namespace Editor.Engine
             Name = name;
             GroupModels.AddRange(models);
         }
+
+        public Group(List<Models> models, List<Group> nestedGroups, string name = "Group")
+        {
+            Name = name;
+            GroupModels.AddRange(models);
+            NestedGroups.AddRange(nestedGroups);
+        }
         public List<Models> Ungroup()
         {
             var ungroupedModels = new List<Models>(GroupModels);
+            
+            // Add models from nested groups
+            foreach (var nestedGroup in NestedGroups)
+            {
+                ungroupedModels.AddRange(nestedGroup.Ungroup());
+            }
+            
             GroupModels.Clear();
+            NestedGroups.Clear();
             Selected = false;
             return ungroupedModels;
         }
@@ -44,6 +60,40 @@ namespace Editor.Engine
             }
         }
 
+        public void AddNestedGroup(Group group)
+        {
+            if (group != null && !NestedGroups.Contains(group))
+            {
+                NestedGroups.Add(group);
+            }
+        }
+
+        public void RemoveNestedGroup(Group group)
+        {
+            NestedGroups.Remove(group);
+        }
+
+        public Group FindGroupContaining(Models model)
+        {
+            // Check direct models
+            if (GroupModels.Contains(model))
+            {
+                return this;
+            }
+            
+            // Check nested groups
+            foreach (var nestedGroup in NestedGroups)
+            {
+                var found = nestedGroup.FindGroupContaining(model);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+            
+            return null;
+        }
+
         public void Serialize(BinaryWriter stream)
         {
             stream.Write(Name);
@@ -51,6 +101,13 @@ namespace Editor.Engine
             foreach (var model in GroupModels)
             {
                 model.Serialize(stream);
+            }
+            
+            // Serialize nested groups
+            stream.Write(NestedGroups.Count);
+            foreach (var nestedGroup in NestedGroups)
+            {
+                nestedGroup.Serialize(stream);
             }
         }
 
@@ -65,6 +122,23 @@ namespace Editor.Engine
                 var model = new Models();
                 model.Deserialize(stream, game);
                 GroupModels.Add(model);
+            }
+            
+            // Deserialize nested groups
+            try
+            {
+                int nestedGroupCount = stream.ReadInt32();
+                NestedGroups.Clear();
+                
+                for (int i = 0; i < nestedGroupCount; i++)
+                {
+                    var nestedGroup = new Group();
+                    nestedGroup.Deserialize(stream, game);
+                    NestedGroups.Add(nestedGroup);
+                }
+            }
+            catch
+            {
             }
         }
     }

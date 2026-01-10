@@ -19,7 +19,7 @@ namespace Editor.GUI
         // LUA keywords
         private static readonly string[] Keywords = {
             "function", "end", "if", "then", "else", "elseif", "while", "do", 
-            "for", "in", "local", "return", "break", "true", "false", "nul"
+            "for", "in", "local", "return", "break", "true", "false", "nil"
         };
 
         // Apply LUA syntax highlighting to a RichTextBox

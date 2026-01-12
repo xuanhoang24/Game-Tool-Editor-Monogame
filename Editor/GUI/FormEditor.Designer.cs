@@ -50,6 +50,10 @@
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             propertyGrid = new System.Windows.Forms.PropertyGrid();
             listBoxAssets = new System.Windows.Forms.ListBox();
+            labelSceneHierarchy = new System.Windows.Forms.Label();
+            labelPrefabs = new System.Windows.Forms.Label();
+            labelProperties = new System.Windows.Forms.Label();
+            labelAssets = new System.Windows.Forms.Label();
             menuStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
@@ -211,10 +215,12 @@
             // splitContainer3.Panel1
             // 
             splitContainer3.Panel1.Controls.Add(sceneTreeView);
+            splitContainer3.Panel1.Controls.Add(labelSceneHierarchy);
             // 
             // splitContainer3.Panel2
             // 
             splitContainer3.Panel2.Controls.Add(listBoxPrefabs);
+            splitContainer3.Panel2.Controls.Add(labelPrefabs);
             splitContainer3.Size = new System.Drawing.Size(320, 826);
             splitContainer3.SplitterDistance = 389;
             splitContainer3.TabIndex = 0;
@@ -222,23 +228,51 @@
             // sceneTreeView
             // 
             sceneTreeView.AllowDrop = true;
-            sceneTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
+            sceneTreeView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             sceneTreeView.HideSelection = false;
             sceneTreeView.LabelEdit = true;
-            sceneTreeView.Location = new System.Drawing.Point(0, 0);
+            sceneTreeView.Location = new System.Drawing.Point(0, 20);
             sceneTreeView.Name = "sceneTreeView";
-            sceneTreeView.Size = new System.Drawing.Size(320, 389);
+            sceneTreeView.Size = new System.Drawing.Size(320, 369);
             sceneTreeView.TabIndex = 0;
+            // 
+            // labelSceneHierarchy
+            // 
+            labelSceneHierarchy.BackColor = System.Drawing.SystemColors.Control;
+            labelSceneHierarchy.Dock = System.Windows.Forms.DockStyle.Top;
+            labelSceneHierarchy.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            labelSceneHierarchy.Location = new System.Drawing.Point(0, 0);
+            labelSceneHierarchy.Name = "labelSceneHierarchy";
+            labelSceneHierarchy.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
+            labelSceneHierarchy.Size = new System.Drawing.Size(320, 20);
+            labelSceneHierarchy.TabIndex = 1;
+            labelSceneHierarchy.Text = "Scene Hierarchy";
             // 
             // listBoxPrefabs
             // 
-            listBoxPrefabs.Dock = System.Windows.Forms.DockStyle.Fill;
+            listBoxPrefabs.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             listBoxPrefabs.FormattingEnabled = true;
             listBoxPrefabs.ItemHeight = 15;
-            listBoxPrefabs.Location = new System.Drawing.Point(0, 0);
+            listBoxPrefabs.Location = new System.Drawing.Point(0, 20);
             listBoxPrefabs.Name = "listBoxPrefabs";
-            listBoxPrefabs.Size = new System.Drawing.Size(320, 433);
+            listBoxPrefabs.Size = new System.Drawing.Size(320, 413);
             listBoxPrefabs.TabIndex = 0;
+            // 
+            // labelPrefabs
+            // 
+            labelPrefabs.BackColor = System.Drawing.SystemColors.Control;
+            labelPrefabs.Dock = System.Windows.Forms.DockStyle.Top;
+            labelPrefabs.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            labelPrefabs.Location = new System.Drawing.Point(0, 0);
+            labelPrefabs.Name = "labelPrefabs";
+            labelPrefabs.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
+            labelPrefabs.Size = new System.Drawing.Size(320, 20);
+            labelPrefabs.TabIndex = 1;
+            labelPrefabs.Text = "Prefabs";
             // 
             // splitContainer1
             // 
@@ -250,31 +284,61 @@
             // splitContainer1.Panel1
             // 
             splitContainer1.Panel1.Controls.Add(propertyGrid);
+            splitContainer1.Panel1.Controls.Add(labelProperties);
             // 
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(listBoxAssets);
+            splitContainer1.Panel2.Controls.Add(labelAssets);
             splitContainer1.Size = new System.Drawing.Size(408, 826);
             splitContainer1.SplitterDistance = 415;
             splitContainer1.TabIndex = 1;
             // 
             // propertyGrid
             // 
-            propertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
-            propertyGrid.Location = new System.Drawing.Point(0, 0);
+            propertyGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            propertyGrid.Location = new System.Drawing.Point(0, 20);
             propertyGrid.Name = "propertyGrid";
-            propertyGrid.Size = new System.Drawing.Size(408, 415);
+            propertyGrid.Size = new System.Drawing.Size(408, 395);
             propertyGrid.TabIndex = 0;
+            // 
+            // labelProperties
+            // 
+            labelProperties.BackColor = System.Drawing.SystemColors.Control;
+            labelProperties.Dock = System.Windows.Forms.DockStyle.Top;
+            labelProperties.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            labelProperties.Location = new System.Drawing.Point(0, 0);
+            labelProperties.Name = "labelProperties";
+            labelProperties.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
+            labelProperties.Size = new System.Drawing.Size(408, 20);
+            labelProperties.TabIndex = 1;
+            labelProperties.Text = "Properties";
             // 
             // listBoxAssets
             // 
-            listBoxAssets.Dock = System.Windows.Forms.DockStyle.Fill;
+            listBoxAssets.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             listBoxAssets.FormattingEnabled = true;
             listBoxAssets.ItemHeight = 15;
-            listBoxAssets.Location = new System.Drawing.Point(0, 0);
+            listBoxAssets.Location = new System.Drawing.Point(0, 20);
             listBoxAssets.Name = "listBoxAssets";
-            listBoxAssets.Size = new System.Drawing.Size(408, 407);
+            listBoxAssets.Size = new System.Drawing.Size(408, 387);
             listBoxAssets.TabIndex = 0;
+            // 
+            // labelAssets
+            // 
+            labelAssets.BackColor = System.Drawing.SystemColors.Control;
+            labelAssets.Dock = System.Windows.Forms.DockStyle.Top;
+            labelAssets.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            labelAssets.Location = new System.Drawing.Point(0, 0);
+            labelAssets.Name = "labelAssets";
+            labelAssets.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
+            labelAssets.Size = new System.Drawing.Size(408, 20);
+            labelAssets.TabIndex = 1;
+            labelAssets.Text = "Assets";
             // 
             // FormEditor
             // 
@@ -335,5 +399,9 @@
         private System.Windows.Forms.ToolStripMenuItem createPrefabToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem scriptsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openScriptEditorToolStripMenuItem;
+        private System.Windows.Forms.Label labelSceneHierarchy;
+        private System.Windows.Forms.Label labelPrefabs;
+        private System.Windows.Forms.Label labelProperties;
+        private System.Windows.Forms.Label labelAssets;
     }
 }

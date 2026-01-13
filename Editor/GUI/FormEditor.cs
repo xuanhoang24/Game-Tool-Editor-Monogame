@@ -59,8 +59,82 @@ namespace Editor
 
             int index = listBoxPrefabs.IndexFromPoint(e.X, e.Y);
             if (index < 0) return;
+            
             var lip = listBoxPrefabs.Items[index] as ListItemPrefab;
-            DoDragDrop(lip, DragDropEffects.Copy);
+            
+            if (e.Button == MouseButtons.Right)
+            {
+                listBoxPrefabs.SelectedIndex = index;
+                ShowPrefabContextMenu(e.Location);
+            }
+            else if (e.Button == MouseButtons.Left)
+            {
+                DoDragDrop(lip, DragDropEffects.Copy);
+            }
+        }
+
+        private void ShowPrefabContextMenu(System.Drawing.Point location)
+        {
+            if (listBoxPrefabs.SelectedItem == null) return;
+
+            var contextMenu = new ContextMenuStrip();
+            
+            var deleteMenuItem = new ToolStripMenuItem("Delete Prefab");
+            deleteMenuItem.Click += DeletePrefab_Click;
+            contextMenu.Items.Add(deleteMenuItem);
+            
+            // Show the context menu at the mouse location
+            contextMenu.Show(listBoxPrefabs, location);
+        }
+
+        private void DeletePrefab_Click(object sender, EventArgs e)
+        {
+            if (listBoxPrefabs.SelectedItem == null) return;
+
+            var selectedPrefab = listBoxPrefabs.SelectedItem as ListItemPrefab;
+            if (selectedPrefab == null) return;
+
+            // Confirm deletion
+            var result = MessageBox.Show(
+                $"Are you sure you want to delete the prefab '{selectedPrefab.Name}'?",
+                "Delete Prefab",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    // Delete the .prefab file
+                    string prefabPath = Path.Combine(Game.Project.Folder, selectedPrefab.Name);
+                    if (File.Exists(prefabPath))
+                    {
+                        File.Delete(prefabPath);
+                        
+                        // Remove from the list
+                        listBoxPrefabs.Items.Remove(selectedPrefab);
+                        
+                        MessageBox.Show($"Prefab '{selectedPrefab.Name}' has been deleted.", 
+                                      "Prefab Deleted", 
+                                      MessageBoxButtons.OK, 
+                                      MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Prefab file '{selectedPrefab.Name}' not found.", 
+                                      "File Not Found", 
+                                      MessageBoxButtons.OK, 
+                                      MessageBoxIcon.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error deleting prefab: {ex.Message}", 
+                                  "Delete Error", 
+                                  MessageBoxButtons.OK, 
+                                  MessageBoxIcon.Error);
+                }
+            }
         }
 
         private void HookEvent()
